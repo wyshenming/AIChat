@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>ChatPulse | Conversations</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-primary": "#ffffff",
+                    "primary-fixed-dim": "#adc6ff",
+                    "primary-fixed": "#d8e2ff",
+                    "on-tertiary": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "on-primary-fixed-variant": "#004395",
+                    "on-tertiary-container": "#fffbff",
+                    "on-secondary-container": "#003c70",
+                    "on-primary-container": "#fefcff",
+                    "outline-variant": "#c2c6d6",
+                    "surface-container-low": "#eff4ff",
+                    "background": "#f8f9ff",
+                    "surface": "#f8f9ff",
+                    "surface-tint": "#005ac2",
+                    "tertiary-container": "#b75b00",
+                    "on-surface-variant": "#424754",
+                    "secondary": "#0060ac",
+                    "error": "#ba1a1a",
+                    "on-tertiary-fixed-variant": "#723600",
+                    "surface-container-lowest": "#ffffff",
+                    "primary-container": "#2170e4",
+                    "on-surface": "#121c2a",
+                    "inverse-primary": "#adc6ff",
+                    "on-error-container": "#93000a",
+                    "on-secondary-fixed": "#001c39",
+                    "on-error": "#ffffff",
+                    "surface-variant": "#d9e3f6",
+                    "tertiary-fixed-dim": "#ffb786",
+                    "secondary-fixed-dim": "#a4c9ff",
+                    "tertiary": "#924700",
+                    "secondary-fixed": "#d4e3ff",
+                    "on-secondary-fixed-variant": "#004883",
+                    "surface-dim": "#d0dbed",
+                    "primary": "#0058be",
+                    "surface-container-highest": "#d9e3f6",
+                    "on-background": "#121c2a",
+                    "outline": "#727785",
+                    "inverse-surface": "#27313f",
+                    "on-primary-fixed": "#001a42",
+                    "surface-container": "#e6eeff",
+                    "on-secondary": "#ffffff",
+                    "tertiary-fixed": "#ffdcc6",
+                    "on-tertiary-fixed": "#311400",
+                    "surface-bright": "#f8f9ff",
+                    "inverse-on-surface": "#eaf1ff",
+                    "secondary-container": "#64a8fe",
+                    "surface-container-high": "#dee9fc"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "2xl": "1rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "sm": "8px",
+                    "md": "16px",
+                    "lg": "24px",
+                    "base": "4px",
+                    "margin-desktop": "40px",
+                    "xs": "4px",
+                    "gutter": "16px",
+                    "margin-mobile": "16px",
+                    "xl": "32px"
+            },
+            "fontFamily": {
+                    "body-md": ["Inter"],
+                    "headline-lg": ["Plus Jakarta Sans"],
+                    "body-lg": ["Inter"],
+                    "label-md": ["Inter"],
+                    "headline-sm": ["Plus Jakarta Sans"],
+                    "headline-lg-mobile": ["Plus Jakarta Sans"],
+                    "chat-bubble": ["Inter"],
+                    "headline-md": ["Plus Jakarta Sans"]
+            },
+            "fontSize": {
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "500"}],
+                    "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "700"}],
+                    "chat-bubble": ["15px", {"lineHeight": "22px", "fontWeight": "400"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .chat-card-shadow {
+            shadow-[0px_4px_12px_rgba(0,0,0,0.03)];
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body-md overflow-hidden flex flex-col h-screen">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-surface flex justify-between items-center px-margin-mobile h-16 shadow-sm transition-colors duration-200">
+<div class="flex items-center gap-4">
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface hover:bg-surface-container-low transition-all active:scale-95">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+</button>
+<h1 class="font-headline-md text-headline-md text-primary font-extrabold tracking-tight">ChatPulse</h1>
+</div>
+<div class="flex items-center gap-2">
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface hover:bg-surface-container-low transition-all active:scale-95">
+<span class="material-symbols-outlined" data-icon="search">search</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-on-surface hover:bg-surface-container-low transition-all active:scale-95">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 mt-16 mb-20 overflow-y-auto hide-scrollbar">
+<!-- Pinned / Active Header -->
+<section class="px-margin-mobile pt-md pb-sm">
+<h2 class="font-headline-sm text-headline-sm text-on-surface mb-2">Recent Messages</h2>
+<div class="flex gap-4 overflow-x-auto hide-scrollbar py-2">
+<!-- AI Personalities Chips -->
+<div class="flex flex-col items-center gap-2 flex-shrink-0">
+<div class="relative w-14 h-14 rounded-full border-2 border-primary-container p-0.5">
+<img class="w-full h-full rounded-full object-cover" data-alt="A friendly, high-fidelity 3D rendered robot character with glowing blue eyes and a smooth white ceramic finish, set against a soft bokeh background of a high-tech laboratory with azure lighting. The style is modern, approachable, and digital art focused." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDwNC-du1NkW4n-98CBRIRPzNChYuHEZXBSfJE_qAL6Q2Y9V4ul0LmD_wH0RyiCQR1VawzJ1I98fmvzI64xMjL6gOHiz-4EONuhxaoLvhOxR3dHL7tgIj2_EKdPswXlNbusN3RbqS7bUEyE0DkMJAMdutuJ9FrC5RNUaW4jtRlntZyetTver_8UJ-FpDbwZvW24yY_-ITcjQyyyRj1I153Ug8qKjBPMGdJVHBkWvshO7F69PzFN_zwvtVk7n-i_C21I8u8rikF00lsw"/>
+<div class="absolute bottom-0 right-0 w-4 h-4 bg-green-500 border-2 border-surface rounded-full"></div>
+</div>
+<span class="font-label-md text-label-md">Nova AI</span>
+</div>
+<div class="flex flex-col items-center gap-2 flex-shrink-0">
+<div class="relative w-14 h-14 rounded-full border-2 border-transparent p-0.5">
+<img class="w-full h-full rounded-full object-cover" data-alt="A candid, high-resolution portrait of a young man with a warm smile and expressive eyes, wearing a casual denim jacket in a brightly lit, modern urban environment with soft afternoon sunlight. The photography style is sharp and professional with a shallow depth of field." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAdqcz5qJZCWrF9YrNn02xC05AsjpnLahI2mUsarGlSNz_E-UHGXNobjxzIocZw4vPtmby0Wa871cmYfI4EgxWSHoSuh8z8ODVFaKjEV_CIlmnUY6bKbwtM1M8WMfeh0PmYQMo5-FpciOWNx5QVC_tPDhHemEMaeG7sK3oDSkxTuLzmR121rE7u2OBYWHd_n5X3ifudq89Bw0vcA6shX6OXC2jpiWvkwlYdbkA3ilR9olBO-3pQ80_9a8HYjsWEJWlgw684T4eR0cyZ"/>
+<div class="absolute bottom-0 right-0 w-4 h-4 bg-green-500 border-2 border-surface rounded-full"></div>
+</div>
+<span class="font-label-md text-label-md">Alex</span>
+</div>
+<div class="flex flex-col items-center gap-2 flex-shrink-0">
+<div class="relative w-14 h-14 rounded-full border-2 border-transparent p-0.5">
+<img class="w-full h-full rounded-full object-cover" data-alt="A sleek, futuristic humanoid robot with polished metallic chrome surfaces reflecting a minimalist digital studio with cool white and blue lighting. The robot has a friendly, human-like interface for eyes and a subtle glow from within its chassis." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDJt8B-q8-f38Rcgu-RxS6rUqDds0NMd1oHetTa6X7KhC9r18hWTz9Lb8TsTiVTQrL4QA3bS2ZVs1kDDcmn0Z34PU1Wrmii30sxYqjQZY1JU6uyKH1cgJFLH-CQgil5gH1SJ9c8AYg4yBg6F5lnxQOMLN2Pbj8BP-u3JSeusR0do14KBUh2Gf3fMMahxAK_xkpc0ZFjs8nRP3PHc7LdigVIuFnHr2Ozo1oJ72MG80jhT0x7JhkbAfGWHLYcMrFtfRTnboBA9ZUTkLgt"/>
+</div>
+<span class="font-label-md text-label-md">Echo-7</span>
+</div>
+<div class="flex flex-col items-center gap-2 flex-shrink-0">
+<div class="relative w-14 h-14 rounded-full border-2 border-transparent p-0.5">
+<img class="w-full h-full rounded-full object-cover" data-alt="A professional headshot of a smiling woman with a creative aura, wearing modern glasses and a linen shirt. She is positioned in a sun-drenched architectural office space with vibrant green plants and soft natural highlights." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAksCxWYpQPYh4Ol5d7aMzmzYuYCLcYQ5JY8w8LceA6sZu37-EVZCXLeQq2aztK5jiIwa-4Zs4GdPg3qV76jIoJVDwSAHU94suUEaa0AJ9nkFPGhVQun6xcJQfOQsgRmV2USbKh8olb_sPW48NkUEKBVa9vcg_ztPg0nswVcMomyqYMb8aJ73YC9wVm9JBmjWmhXhQ6f8NM6EKzjnW7qzKfwnN86LIQ5mHBiynTKuOhuP1bQcNDXHid-1-JndRDzt-0_SoxVRqNdUNI"/>
+</div>
+<span class="font-label-md text-label-md">Sarah</span>
+</div>
+</div>
+</section>
+<!-- Chat List -->
+<section class="px-margin-mobile mt-md space-y-4">
+<!-- Chat Item 1 (AI) -->
+<a class="block group" href="#">
+<div class="flex items-center p-4 bg-surface-container-lowest rounded-2xl shadow-[0px_4px_12px_rgba(0,0,0,0.03)] border border-transparent group-active:scale-[0.98] transition-all duration-200 group-hover:border-primary-container">
+<div class="relative flex-shrink-0">
+<img class="w-14 h-14 rounded-full object-cover border border-surface-variant" data-alt="A friendly, high-fidelity 3D rendered robot character with glowing blue eyes and a smooth white ceramic finish, set against a soft bokeh background of a high-tech laboratory with azure lighting. The style is modern, approachable, and digital art focused." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBKZRDC6iUjngBpx0LOC48e9P1yyFMXxqu7gbqPhtfIWb_zHvIEfUG0-kIKlXzX-dNqeYzPaRURDc277fTiAitlfvIGYfBF-2EoA5tV74oL5kXRz7YlXdOPfk2rAcXirOWYNXS9PKAUQZZLhUNgzS3s4Li9zIefxbD5xg7TW56R5_GEJbiUOUpmES6AeDHuGZtFj31zIMQh-88c72SJrGFpjNqKJmxrwk6UnW_MJB-QBwmFXXj9JREjSVf51Fp3NeghgbtXiGjTuUQE"/>
+<div class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-surface-container-lowest rounded-full"></div>
+</div>
+<div class="ml-4 flex-1 min-w-0">
+<div class="flex justify-between items-baseline">
+<h3 class="font-headline-sm text-on-surface truncate leading-tight">Nova AI</h3>
+<span class="font-label-md text-label-md text-on-surface-variant">10:42 AM</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant truncate mt-1">I've analyzed your data. Ready to review the insights?</p>
+</div>
+<div class="ml-2 flex flex-col items-end gap-1">
+<div class="w-5 h-5 bg-primary rounded-full flex items-center justify-center">
+<span class="text-[10px] font-bold text-on-primary">2</span>
+</div>
+</div>
+</div>
+</a>
+<!-- Chat Item 2 (Human) -->
+<a class="block group" href="#">
+<div class="flex items-center p-4 bg-surface-container-lowest rounded-2xl shadow-[0px_4px_12px_rgba(0,0,0,0.03)] border border-transparent group-active:scale-[0.98] transition-all duration-200 group-hover:border-primary-container">
+<div class="relative flex-shrink-0">
+<img class="w-14 h-14 rounded-full object-cover" data-alt="A candid, high-resolution portrait of a young man with a warm smile and expressive eyes, wearing a casual denim jacket in a brightly lit, modern urban environment with soft afternoon sunlight. The photography style is sharp and professional with a shallow depth of field." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD4s6T9qwwXIeyg7q0j_24YNvKd9ELUY7__1DUi15iNL5opLUQJZ2jhplsoui4EL0S0mV4p3RRT2Z3RGB3VzQ8jkOyZ4Ih_d2O7J5Yg_Dqk_yJGDXmMK8qQhzMHppTJEZQOxM23pGMhSXh-eoAJQy22v3KziYRfjQI7O_mhjLz4qDMo-ZPAxXmDhRAVzTdkbgq4CwDz_1ZxS72jhMfSQxRBkntxo6jlaJLMbSBKCE1sy7rHmlVNkHjPe_banJ4GAhz6Pe7MH2uWNMe-"/>
+</div>
+<div class="ml-4 flex-1 min-w-0">
+<div class="flex justify-between items-baseline">
+<h3 class="font-headline-sm text-on-surface truncate leading-tight">Alex Rivers</h3>
+<span class="font-label-md text-label-md text-on-surface-variant">9:15 AM</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant truncate mt-1">See you at the cafe at 3 PM! Don't forget the docs.</p>
+</div>
+</div>
+</a>
+<!-- Chat Item 3 (AI) -->
+<a class="block group" href="#">
+<div class="flex items-center p-4 bg-surface-container-lowest rounded-2xl shadow-[0px_4px_12px_rgba(0,0,0,0.03)] border border-transparent group-active:scale-[0.98] transition-all duration-200 group-hover:border-primary-container">
+<div class="relative flex-shrink-0">
+<img class="w-14 h-14 rounded-full object-cover" data-alt="A sleek, futuristic humanoid robot with polished metallic chrome surfaces reflecting a minimalist digital studio with cool white and blue lighting. The robot has a friendly, human-like interface for eyes and a subtle glow from within its chassis." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB0NxupN4nw5p4yRseqPLvr3GDu94oeVsMfQ2IqevtqBa-SQQu5H9di83Tm-oPCzctwNsGOK_fMJOV5scILSkIIvpjGdSHXfm0qmq6tuYtPiCFasi4LN9ZXd_g0WqpqjqtuAjL2eatkcpEogmTIiYxlAbjGg_OkhBh-j4mYHMLYjxEmi3nkKu-P5c9o_d_FC797xBj3uloJAi77AIxqhv3xvYu_gJlrw0Un7JtNlkR0aBRaVoB4Kk15kfEM5R1NXjIQGj4Jkd-j5fbZ"/>
+</div>
+<div class="ml-4 flex-1 min-w-0">
+<div class="flex justify-between items-baseline">
+<h3 class="font-headline-sm text-on-surface truncate leading-tight">Echo-7</h3>
+<span class="font-label-md text-label-md text-on-surface-variant">Yesterday</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant truncate mt-1">Your flight confirmation has been processed.</p>
+</div>
+</div>
+</a>
+<!-- Chat Item 4 (Human) -->
+<a class="block group" href="#">
+<div class="flex items-center p-4 bg-surface-container-lowest rounded-2xl shadow-[0px_4px_12px_rgba(0,0,0,0.03)] border border-transparent group-active:scale-[0.98] transition-all duration-200 group-hover:border-primary-container">
+<div class="relative flex-shrink-0">
+<img class="w-14 h-14 rounded-full object-cover" data-alt="A professional headshot of a smiling woman with a creative aura, wearing modern glasses and a linen shirt. She is positioned in a sun-drenched architectural office space with vibrant green plants and soft natural highlights." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAqES1k4VNwMkSn58We_QrWh08K_Q8oAYyZDkdl1WuGzOqFvS9EFT_IZfyd3jJlYdpfIcs95O6rkL-PMzvXg2ExTsqfVF5jRB2hZEMcuJEpSt4JvSWgJ5VmQd0ZMe0AjGgIHoSeFJGMHFo4ffWOPLjkCTPEFKZQe7KN0Kxbj18cJ-5QtFWGvorAnlqY-lFdAagAEj6UJxGEHlHZdTgQaslIMFLzRTPfcU3wSGAG5fpb3yZPV8s_f9mOn2Gi5GXWWxxwZLErAO9aMsBL"/>
+</div>
+<div class="ml-4 flex-1 min-w-0">
+<div class="flex justify-between items-baseline">
+<h3 class="font-headline-sm text-on-surface truncate leading-tight">Sarah Chen</h3>
+<span class="font-label-md text-label-md text-on-surface-variant">Tuesday</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant truncate mt-1">The new designs look amazing. Great work team!</p>
+</div>
+</div>
+</a>
+<!-- Chat Item 5 (Human) -->
+<a class="block group" href="#">
+<div class="flex items-center p-4 bg-surface-container-lowest rounded-2xl shadow-[0px_4px_12px_rgba(0,0,0,0.03)] border border-transparent group-active:scale-[0.98] transition-all duration-200 group-hover:border-primary-container">
+<div class="relative flex-shrink-0">
+<img class="w-14 h-14 rounded-full object-cover" data-alt="A high-quality studio portrait of a man with a groomed beard and a sophisticated look, wearing a neutral-toned cashmere sweater. The lighting is soft and cinematic, creating a calm and professional mood against a muted grey background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCPhstVS2IpGfKfZeqOiJwJOeIV_FVFNsM9Ld2ZzBu6V1zhwbyQMSo1uAu3qdD-8WEC3SGGgJrxbKbOulikW6fRoQgqdJGgZr6uWxLyQjpnk61_lYz4J55NZLHZdiNNNRk6zw8C4jQCAcjtVzvgaIz8UUsWJtSvAYSqQ7KxCmGGM6Kh7YxaZBRL-TZ67a3LJEk4t8m4P7JWBtdA36Nk_ZLSxkcX-oVvc_fQ9DASfdvUUZaqyS90oqRzJfK-27XzbP6LYHIiF4rxME3B"/>
+</div>
+<div class="ml-4 flex-1 min-w-0">
+<div class="flex justify-between items-baseline">
+<h3 class="font-headline-sm text-on-surface truncate leading-tight">James Wilson</h3>
+<span class="font-label-md text-label-md text-on-surface-variant">Dec 12</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant truncate mt-1">Are we still on for the strategy meeting?</p>
+</div>
+</div>
+</a>
+</section>
+</main>
+<!-- FAB (Contextual for Home/Chat List) -->
+<button class="fixed bottom-24 right-margin-mobile w-14 h-14 bg-primary text-on-primary rounded-2xl shadow-lg flex items-center justify-center transition-all active:scale-90 hover:bg-primary-container hover:text-on-primary-container z-40">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+</button>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full h-20 z-50 flex justify-around items-center px-4 pb-safe bg-surface-container-lowest shadow-[0px_-4px_12px_rgba(0,0,0,0.03)] rounded-t-xl">
+<!-- Chats (Active) -->
+<a class="flex flex-col items-center justify-center bg-secondary-container text-on-secondary-container rounded-full px-4 py-1 transition-all duration-300 ease-in-out active:scale-90" href="#">
+<span class="material-symbols-outlined" data-icon="chat" style="font-variation-settings: 'FILL' 1;">chat</span>
+<span class="font-label-md text-label-md mt-0.5">Chats</span>
+</a>
+<!-- Characters -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-high transition-all duration-300 ease-in-out active:scale-90" href="#">
+<span class="material-symbols-outlined" data-icon="smart_toy">smart_toy</span>
+<span class="font-label-md text-label-md mt-0.5">Characters</span>
+</a>
+<!-- Profile -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant px-4 py-1 hover:bg-surface-container-high transition-all duration-300 ease-in-out active:scale-90" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-label-md text-label-md mt-0.5">Profile</span>
+</a>
+</nav>
+<script>
+        // Simple interaction for chat items
+        document.querySelectorAll('a.group').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                // In a real app, this would use a router
+                console.log('Navigating to chat room...');
+                // Visual feedback
+                item.firstElementChild.classList.add('bg-secondary-container');
+                setTimeout(() => {
+                    item.firstElementChild.classList.remove('bg-secondary-container');
+                }, 200);
+            });
+        });
+    </script>
+</body></html>

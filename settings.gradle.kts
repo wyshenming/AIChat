@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "AiChatHub"
-include ":app"
+rootProject.name = "SillyTavernApp"
+include(":app")

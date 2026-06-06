@@ -1,0 +1,282 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>API Management - ChatPulse</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .mask-fade {
+            mask-image: linear-gradient(to right, black 50%, transparent 100%);
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(8px);
+        }
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-container": "#fffbff",
+                        "primary-fixed-dim": "#adc6ff",
+                        "background": "#f8f9ff",
+                        "surface-container-highest": "#d9e3f6",
+                        "on-primary-fixed-variant": "#004395",
+                        "secondary-fixed-dim": "#a4c9ff",
+                        "on-surface": "#121c2a",
+                        "surface-container-lowest": "#ffffff",
+                        "inverse-primary": "#adc6ff",
+                        "on-surface-variant": "#424754",
+                        "on-secondary-container": "#003c70",
+                        "inverse-on-surface": "#eaf1ff",
+                        "secondary": "#0060ac",
+                        "tertiary-fixed-dim": "#ffb786",
+                        "inverse-surface": "#27313f",
+                        "on-secondary-fixed": "#001c39",
+                        "surface-container-low": "#eff4ff",
+                        "surface-tint": "#005ac2",
+                        "on-secondary-fixed-variant": "#004883",
+                        "surface-container": "#e6eeff",
+                        "tertiary-container": "#b75b00",
+                        "secondary-container": "#64a8fe",
+                        "surface-bright": "#f8f9ff",
+                        "on-tertiary": "#ffffff",
+                        "primary-fixed": "#d8e2ff",
+                        "outline-variant": "#c2c6d6",
+                        "primary-container": "#2170e4",
+                        "on-primary-container": "#fefcff",
+                        "on-primary-fixed": "#001a42",
+                        "on-error": "#ffffff",
+                        "tertiary-fixed": "#ffdcc6",
+                        "error-container": "#ffdad6",
+                        "on-tertiary-fixed": "#311400",
+                        "surface-variant": "#d9e3f6",
+                        "on-secondary": "#ffffff",
+                        "on-tertiary-fixed-variant": "#723600",
+                        "surface": "#f8f9ff",
+                        "secondary-fixed": "#d4e3ff",
+                        "on-primary": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "outline": "#727785",
+                        "error": "#ba1a1a",
+                        "surface-dim": "#d0dbed",
+                        "primary": "#0058be",
+                        "on-background": "#121c2a",
+                        "surface-container-high": "#dee9fc",
+                        "tertiary": "#924700"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-desktop": "40px",
+                        "gutter": "16px",
+                        "md": "16px",
+                        "sm": "8px",
+                        "margin-mobile": "16px",
+                        "xs": "4px",
+                        "xl": "32px",
+                        "lg": "24px",
+                        "base": "4px"
+                    },
+                    "fontFamily": {
+                        "label-md": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-lg-mobile": ["Plus Jakarta Sans"],
+                        "body-lg": ["Inter"],
+                        "headline-lg": ["Plus Jakarta Sans"],
+                        "headline-sm": ["Plus Jakarta Sans"],
+                        "chat-bubble": ["Inter"],
+                        "headline-md": ["Plus Jakarta Sans"]
+                    },
+                    "fontSize": {
+                        "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "500"}],
+                        "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                        "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "700"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "chat-bubble": ["15px", {"lineHeight": "22px", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-md flex justify-between items-center px-margin-mobile h-16 shadow-sm">
+<div class="flex items-center gap-4">
+<button class="transition-colors duration-200 active:scale-95 text-primary flex items-center justify-center p-2 rounded-full hover:bg-surface-container-low">
+<span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+</button>
+<h1 class="font-headline-sm text-headline-sm text-on-surface">API Management</h1>
+</div>
+<div class="flex items-center">
+<button class="transition-colors duration-200 active:scale-95 text-on-surface flex items-center justify-center p-2 rounded-full hover:bg-surface-container-low">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</button>
+</div>
+</header>
+<main class="pt-24 px-margin-mobile max-w-screen-md mx-auto">
+<!-- Hero / Action Section -->
+<div class="mb-lg">
+<div class="relative overflow-hidden rounded-xl bg-primary p-lg text-on-primary shadow-lg mb-xl">
+<div class="relative z-10">
+<h2 class="font-headline-md text-headline-md mb-xs">Manage Connectivity</h2>
+<p class="font-body-md text-body-md opacity-90 mb-lg max-w-xs">Generate and manage secure keys for external integrations.</p>
+<button class="bg-surface-container-lowest text-primary px-lg py-sm rounded-xl font-label-md text-label-md flex items-center gap-2 hover:bg-surface-container-high transition-colors active:scale-95">
+<span class="material-symbols-outlined text-[18px]" data-icon="add">add</span>
+                        Add New API
+                    </button>
+</div>
+<!-- Abstract visual element -->
+<div class="absolute -right-12 -top-12 w-48 h-48 bg-white/10 rounded-full blur-3xl"></div>
+<div class="absolute right-8 bottom-0 opacity-20">
+<span class="material-symbols-outlined text-[120px]" data-icon="api">api</span>
+</div>
+</div>
+</div>
+<!-- API Keys Section -->
+<div class="space-y-md">
+<h3 class="font-label-md text-label-md text-outline uppercase tracking-widest px-xs">Configured Keys</h3>
+<!-- Production Key Card -->
+<div class="glass-card rounded-xl p-md border border-outline-variant/30 shadow-[0px_4px_12px_rgba(0,0,0,0.03)] hover:shadow-[0px_8px_24px_rgba(0,0,0,0.06)] transition-shadow">
+<div class="flex justify-between items-start mb-sm">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-secondary-container/20 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined" data-icon="shield">shield</span>
+</div>
+<div>
+<h4 class="font-headline-sm text-[16px] text-on-surface">Production Key</h4>
+<p class="font-label-md text-label-md text-outline">Created Oct 12, 2023</p>
+</div>
+</div>
+<div class="flex items-center bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+<span class="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5"></span>
+<span class="text-[10px] font-bold">ACTIVE</span>
+</div>
+</div>
+<div class="bg-surface-container-low rounded-lg p-sm mb-md flex items-center justify-between border border-outline-variant/20">
+<code class="font-mono text-body-md text-on-surface truncate pr-4 mask-fade">sk_live_51Msz...vA9x2Qp</code>
+<button class="text-outline hover:text-primary transition-colors p-1">
+<span class="material-symbols-outlined text-[20px]" data-icon="content_copy">content_copy</span>
+</button>
+</div>
+<div class="flex gap-sm">
+<button class="flex-1 py-2.5 rounded-lg bg-surface-container text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-high transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]" data-icon="edit">edit</span>
+                        Edit
+                    </button>
+<button class="flex-1 py-2.5 rounded-lg bg-error-container/10 text-error font-label-md text-label-md hover:bg-error-container/20 transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]" data-icon="delete">delete</span>
+                        Delete
+                    </button>
+</div>
+</div>
+<!-- Staging Key Card -->
+<div class="glass-card rounded-xl p-md border border-outline-variant/30 shadow-[0px_4px_12px_rgba(0,0,0,0.03)] hover:shadow-[0px_8px_24px_rgba(0,0,0,0.06)] transition-shadow">
+<div class="flex justify-between items-start mb-sm">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-tertiary-container/10 flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined" data-icon="science">science</span>
+</div>
+<div>
+<h4 class="font-headline-sm text-[16px] text-on-surface">Staging Key</h4>
+<p class="font-label-md text-label-md text-outline">Created Jan 04, 2024</p>
+</div>
+</div>
+<div class="flex items-center bg-surface-variant text-on-surface-variant px-2 py-0.5 rounded-full">
+<span class="w-1.5 h-1.5 rounded-full bg-outline mr-1.5"></span>
+<span class="text-[10px] font-bold">INACTIVE</span>
+</div>
+</div>
+<div class="bg-surface-container-low rounded-lg p-sm mb-md flex items-center justify-between border border-outline-variant/20">
+<code class="font-mono text-body-md text-on-surface truncate pr-4 mask-fade">sk_test_88Xy...99Zz22B</code>
+<button class="text-outline hover:text-primary transition-colors p-1">
+<span class="material-symbols-outlined text-[20px]" data-icon="content_copy">content_copy</span>
+</button>
+</div>
+<div class="flex gap-sm">
+<button class="flex-1 py-2.5 rounded-lg bg-surface-container text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-high transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]" data-icon="edit">edit</span>
+                        Edit
+                    </button>
+<button class="flex-1 py-2.5 rounded-lg bg-error-container/10 text-error font-label-md text-label-md hover:bg-error-container/20 transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-[18px]" data-icon="delete">delete</span>
+                        Delete
+                    </button>
+</div>
+</div>
+<!-- Empty State / New Connection Card -->
+<div class="border-2 border-dashed border-outline-variant/50 rounded-xl p-xl flex flex-col items-center justify-center text-center group cursor-pointer hover:border-primary/50 transition-colors bg-surface-container-lowest/50">
+<div class="w-12 h-12 rounded-full bg-surface-variant text-outline-variant group-hover:bg-primary-container/20 group-hover:text-primary flex items-center justify-center mb-md transition-all">
+<span class="material-symbols-outlined text-[28px]" data-icon="add_circle">add_circle</span>
+</div>
+<h5 class="font-headline-sm text-[16px] text-on-surface">Add Third Key</h5>
+<p class="font-body-md text-body-md text-outline max-w-[200px]">Expand your system integrations with a new secure token.</p>
+</div>
+</div>
+<!-- Documentation Card -->
+<div class="mt-xl p-lg rounded-xl bg-surface-container-low border border-primary/10 flex items-start gap-4">
+<span class="material-symbols-outlined text-primary" data-icon="auto_awesome">auto_awesome</span>
+<div>
+<h4 class="font-label-md text-label-md text-on-surface font-bold mb-xs">Pro Tip: Security First</h4>
+<p class="font-body-md text-body-md text-on-surface-variant">Never share your production keys in public repositories or client-side code. Use environment variables to keep your ChatPulse integration secure.</p>
+<a class="inline-block mt-sm text-primary font-label-md text-label-md hover:underline" href="#">Read API Docs</a>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+
+<script>
+        // Micro-interaction for buttons
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                this.classList.add('scale-95');
+                setTimeout(() => this.classList.remove('scale-95'), 100);
+            });
+        });
+
+        // Subtle parallax effect for hero card
+        const hero = document.querySelector('.relative.overflow-hidden.rounded-xl.bg-primary');
+        if (hero) {
+            hero.addEventListener('mousemove', (e) => {
+                const rect = hero.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                
+                const moveX = (x - centerX) / 40;
+                const moveY = (y - centerY) / 40;
+                
+                hero.style.transform = `perspective(1000px) rotateX(${-moveY}deg) rotateY(${moveX}deg)`;
+            });
+            
+            hero.addEventListener('mouseleave', () => {
+                hero.style.transform = 'perspective(1000px) rotateX(0) rotateY(0)';
+                hero.style.transition = 'transform 0.5s ease';
+            });
+
+            hero.addEventListener('mouseenter', () => {
+                hero.style.transition = 'none';
+            });
+        }
+    </script>
+
+
+</body></html>

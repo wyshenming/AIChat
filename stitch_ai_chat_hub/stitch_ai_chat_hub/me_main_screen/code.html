@@ -1,0 +1,219 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>ChatPulse - Profile Overview</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .profile-card-shadow {
+      box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.03);
+    }
+    .profile-card-active:active {
+      transform: scale(0.98);
+      box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.02);
+    }
+  </style>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+                  "surface-container": "#e6eeff",
+                  "tertiary-container": "#b75b00",
+                  "secondary-container": "#64a8fe",
+                  "on-secondary-fixed-variant": "#004883",
+                  "surface-tint": "#005ac2",
+                  "surface-container-low": "#eff4ff",
+                  "on-secondary-fixed": "#001c39",
+                  "secondary": "#0060ac",
+                  "tertiary-fixed-dim": "#ffb786",
+                  "inverse-surface": "#27313f",
+                  "on-secondary-container": "#003c70",
+                  "inverse-on-surface": "#eaf1ff",
+                  "on-surface-variant": "#424754",
+                  "surface-container-lowest": "#ffffff",
+                  "inverse-primary": "#adc6ff",
+                  "on-primary-fixed-variant": "#004395",
+                  "secondary-fixed-dim": "#a4c9ff",
+                  "on-surface": "#121c2a",
+                  "surface-container-highest": "#d9e3f6",
+                  "background": "#f8f9ff",
+                  "primary-fixed-dim": "#adc6ff",
+                  "on-tertiary-container": "#fffbff",
+                  "tertiary": "#924700",
+                  "surface-dim": "#d0dbed",
+                  "primary": "#0058be",
+                  "on-background": "#121c2a",
+                  "surface-container-high": "#dee9fc",
+                  "outline": "#727785",
+                  "error": "#ba1a1a",
+                  "surface": "#f8f9ff",
+                  "secondary-fixed": "#d4e3ff",
+                  "on-primary": "#ffffff",
+                  "on-error-container": "#93000a",
+                  "on-tertiary-fixed-variant": "#723600",
+                  "surface-variant": "#d9e3f6",
+                  "on-secondary": "#ffffff",
+                  "on-tertiary-fixed": "#311400",
+                  "tertiary-fixed": "#ffdcc6",
+                  "error-container": "#ffdad6",
+                  "on-primary-fixed": "#001a42",
+                  "on-error": "#ffffff",
+                  "primary-container": "#2170e4",
+                  "on-primary-container": "#fefcff",
+                  "primary-fixed": "#d8e2ff",
+                  "outline-variant": "#c2c6d6",
+                  "surface-bright": "#f8f9ff",
+                  "on-tertiary": "#ffffff"
+          },
+          "borderRadius": {
+                  "DEFAULT": "0.25rem",
+                  "lg": "0.5rem",
+                  "xl": "0.75rem",
+                  "full": "9999px"
+          },
+          "spacing": {
+                  "margin-desktop": "40px",
+                  "gutter": "16px",
+                  "md": "16px",
+                  "sm": "8px",
+                  "xs": "4px",
+                  "xl": "32px",
+                  "margin-mobile": "16px",
+                  "lg": "24px",
+                  "base": "4px"
+          },
+          "fontFamily": {
+                  "headline-sm": ["Plus Jakarta Sans"],
+                  "headline-lg": ["Plus Jakarta Sans"],
+                  "headline-lg-mobile": ["Plus Jakarta Sans"],
+                  "body-lg": ["Inter"],
+                  "label-md": ["Inter"],
+                  "body-md": ["Inter"],
+                  "headline-md": ["Plus Jakarta Sans"],
+                  "chat-bubble": ["Inter"]
+          },
+          "fontSize": {
+                  "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                  "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                  "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "700"}],
+                  "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                  "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "500"}],
+                  "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                  "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                  "chat-bubble": ["15px", {"lineHeight": "22px", "fontWeight": "400"}]
+          }
+        },
+      },
+    }
+  </script>
+</head>
+<body class="bg-background text-on-surface font-body-md min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-surface dark:bg-surface shadow-sm dark:shadow-none flex justify-between items-center px-margin-mobile h-16 w-full">
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined text-primary dark:text-primary-fixed-dim transition-colors duration-200 active:scale-95" data-icon="menu">menu</button>
+<h1 class="font-headline-md text-headline-md text-primary dark:text-primary-fixed-dim">ChatPulse</h1>
+</div>
+<div class="flex items-center gap-2">
+<button class="material-symbols-outlined text-primary dark:text-primary-fixed-dim transition-colors duration-200 active:scale-95" data-icon="settings">settings</button>
+</div>
+</header>
+<!-- Main Canvas Content -->
+<main class="flex-1 mt-16 mb-20 px-margin-mobile pt-lg flex flex-col gap-lg">
+<!-- User Brief Intro -->
+<section class="flex flex-col items-center text-center mt-md">
+<div class="relative mb-md">
+<img alt="User Avatar" class="w-24 h-24 rounded-full object-cover border-4 border-surface-container-high profile-card-shadow" data-alt="A clean, professional close-up portrait of a young adult with a friendly expression. The lighting is soft and natural, emphasizing a bright and modern light-mode aesthetic. The background is a blurred, high-end minimalist office space with soft blue and white tones. The overall atmosphere is dependable, human-centric, and calm, matching a high-end corporate modern interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuATH4kU0yCpG7ABnnqZXkdXT0vt3RER9Ome1jwme2EDGVA9K4nZ4WjIAjP9sHaRIYc_z2Zu4Dv2fO59GgTx0quv3mTzpvrvzvs2iPcOPwydMVSEQPxKQYOqZ-7HLdQhoA4yPhss2tLpgysDsTa3HrYliFNyW-gjehBaonPU7Ok9SCY86lUnxrYpHbNv3k7HH8fstjmAMvB8V3Mo3Ys3ff5DSYKVzT8G_tD0VCcOTajGWm33QojK46lmEBtfo6m2BM5xjo6fdKr2Knwa">
+<div class="absolute bottom-1 right-1 w-6 h-6 bg-[#4CAF50] border-4 border-surface rounded-full"></div>
+</div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface">Alex Rivers</h2>
+<p class="font-body-md text-on-surface-variant mt-xs">Premium Member • alex.rivers@chatpulse.io</p>
+</section>
+<!-- Navigation Cards (Bento-style layout) -->
+<section class="grid grid-cols-1 md:grid-cols-2 gap-md mt-sm">
+<!-- API Import Card -->
+<button class="flex items-center gap-md p-md bg-surface-container-lowest rounded-xl profile-card-shadow border border-outline-variant/10 text-left transition-all duration-300 hover:bg-surface-container-low active:scale-95 profile-card-active group">
+  <div class="p-sm rounded-lg bg-primary-container/10 text-primary group-hover:bg-primary-container/20 transition-colors">
+    <span class="material-symbols-outlined !text-lg" data-icon="key">key</span>
+  </div>
+  <h3 class="font-headline-sm text-headline-sm text-on-surface flex-1">API Import</h3>
+  <span class="material-symbols-outlined text-outline-variant" data-icon="chevron_right">chevron_right</span>
+</button>
+<!-- My Profile Card -->
+<button class="flex items-center gap-md p-md bg-surface-container-lowest rounded-xl profile-card-shadow border border-outline-variant/10 text-left transition-all duration-300 hover:bg-surface-container-low active:scale-95 profile-card-active group">
+  <div class="p-sm rounded-lg bg-secondary-container/10 text-secondary group-hover:bg-secondary-container/20 transition-colors">
+    <span class="material-symbols-outlined !text-lg" data-icon="person">person</span>
+  </div>
+  <h3 class="font-headline-sm text-headline-sm text-on-surface flex-1">My Profile</h3>
+  <span class="material-symbols-outlined text-outline-variant" data-icon="chevron_right">chevron_right</span>
+</button>
+</section>
+<!-- Supplemental Section: Quick Links -->
+<section class="mt-md">
+<div class="bg-surface-container-low rounded-xl p-md flex flex-col gap-sm">
+<h4 class="font-label-md text-on-surface-variant px-sm mb-xs">QUICK SETTINGS</h4>
+<div class="flex items-center justify-between p-sm hover:bg-surface rounded-lg transition-colors cursor-pointer">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-outline" data-icon="notifications">notifications</span>
+<span class="font-body-md text-on-surface">Notification Preferences</span>
+</div>
+<span class="material-symbols-outlined text-outline-variant" data-icon="chevron_right">chevron_right</span>
+</div>
+<div class="flex items-center justify-between p-sm hover:bg-surface rounded-lg transition-colors cursor-pointer">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined text-outline" data-icon="verified_user">verified_user</span>
+<span class="font-body-md text-on-surface">Privacy &amp; Data</span>
+</div>
+<span class="material-symbols-outlined text-outline-variant" data-icon="chevron_right">chevron_right</span>
+</div>
+<div class="flex items-center justify-between p-sm hover:bg-surface rounded-lg transition-colors cursor-pointer text-error">
+<div class="flex items-center gap-md">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+<span class="font-body-md">Sign Out</span>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full h-20 z-50 flex justify-around items-center px-4 pb-safe bg-surface-container-lowest dark:bg-surface-container-lowest shadow-[0px_-4px_12px_rgba(0,0,0,0.03)] rounded-t-xl">
+<!-- Tab: Chats -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant px-4 py-1 transition-all duration-300 ease-in-out active:scale-90" href="#">
+<span class="material-symbols-outlined" data-icon="chat">chat</span>
+<span class="font-label-md text-label-md mt-1">Chats</span>
+</a>
+<!-- Tab: Characters -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant dark:text-on-surface-variant px-4 py-1 transition-all duration-300 ease-in-out active:scale-90" href="#">
+<span class="material-symbols-outlined" data-icon="smart_toy">smart_toy</span>
+<span class="font-label-md text-label-md mt-1">Characters</span>
+</a>
+<!-- Tab: Profile (Active) -->
+<a class="flex flex-col items-center justify-center bg-secondary-container dark:bg-secondary-container text-on-secondary-container dark:text-on-secondary-container rounded-full px-4 py-1 transition-all duration-300 ease-in-out active:scale-90" href="#">
+<span class="material-symbols-outlined" data-icon="person" style="font-variation-settings: 'FILL' 1;">person</span>
+<span class="font-label-md text-label-md mt-1 font-bold">Profile</span>
+</a>
+</nav>
+<script>
+    // Minimal interaction logic for card hover states
+    const cards = document.querySelectorAll('.profile-card-active');
+    cards.forEach(card => {
+      card.addEventListener('mouseenter', () => {
+        // Subtle depth effect managed by Tailwind hover classes
+      });
+    });
+
+    // Theme toggler placeholder (if needed)
+    function toggleTheme() {
+      document.documentElement.classList.toggle('dark');
+    }
+  </script>
+
+
+</body></html>

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>ChatPulse - Nova AI</title>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Plus+Jakarta+Sans:wght@600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Design System Configuration -->
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-primary": "#ffffff",
+                    "primary-fixed-dim": "#adc6ff",
+                    "primary-fixed": "#d8e2ff",
+                    "on-tertiary": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "on-primary-fixed-variant": "#004395",
+                    "on-tertiary-container": "#fffbff",
+                    "on-secondary-container": "#003c70",
+                    "on-primary-container": "#fefcff",
+                    "outline-variant": "#c2c6d6",
+                    "surface-container-low": "#eff4ff",
+                    "background": "#f8f9ff",
+                    "surface": "#f8f9ff",
+                    "surface-tint": "#005ac2",
+                    "tertiary-container": "#b75b00",
+                    "on-surface-variant": "#424754",
+                    "secondary": "#0060ac",
+                    "error": "#ba1a1a",
+                    "on-tertiary-fixed-variant": "#723600",
+                    "surface-container-lowest": "#ffffff",
+                    "primary-container": "#2170e4",
+                    "on-surface": "#121c2a",
+                    "inverse-primary": "#adc6ff",
+                    "on-error-container": "#93000a",
+                    "on-secondary-fixed": "#001c39",
+                    "on-error": "#ffffff",
+                    "surface-variant": "#d9e3f6",
+                    "tertiary-fixed-dim": "#ffb786",
+                    "secondary-fixed-dim": "#a4c9ff",
+                    "tertiary": "#924700",
+                    "secondary-fixed": "#d4e3ff",
+                    "on-secondary-fixed-variant": "#004883",
+                    "surface-dim": "#d0dbed",
+                    "primary": "#0058be",
+                    "surface-container-highest": "#d9e3f6",
+                    "on-background": "#121c2a",
+                    "outline": "#727785",
+                    "inverse-surface": "#27313f",
+                    "on-primary-fixed": "#001a42",
+                    "surface-container": "#e6eeff",
+                    "on-secondary": "#ffffff",
+                    "tertiary-fixed": "#ffdcc6",
+                    "on-tertiary-fixed": "#311400",
+                    "surface-bright": "#f8f9ff",
+                    "inverse-on-surface": "#eaf1ff",
+                    "secondary-container": "#64a8fe",
+                    "surface-container-high": "#dee9fc"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "sm": "8px",
+                    "md": "16px",
+                    "lg": "24px",
+                    "base": "4px",
+                    "margin-desktop": "40px",
+                    "xs": "4px",
+                    "gutter": "16px",
+                    "margin-mobile": "16px",
+                    "xl": "32px"
+            },
+            "fontFamily": {
+                    "body-md": ["Inter"],
+                    "headline-lg": ["Plus Jakarta Sans"],
+                    "body-lg": ["Inter"],
+                    "label-md": ["Inter"],
+                    "headline-sm": ["Plus Jakarta Sans"],
+                    "headline-lg-mobile": ["Plus Jakarta Sans"],
+                    "chat-bubble": ["Inter"],
+                    "headline-md": ["Plus Jakarta Sans"]
+            },
+            "fontSize": {
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.01em", "fontWeight": "500"}],
+                    "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "700"}],
+                    "chat-bubble": ["15px", {"lineHeight": "22px", "fontWeight": "400"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .chat-container::-webkit-scrollbar {
+            width: 4px;
+        }
+        .chat-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .chat-container::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 10px;
+        }
+        .message-entrance {
+            animation: slideUp 0.3s ease-out forwards;
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body-md min-h-screen flex flex-col">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-surface shadow-sm flex justify-between items-center px-margin-mobile h-16 w-full">
+<div class="flex items-center gap-md">
+<button class="transition-colors duration-200 active:scale-95 text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full">
+<span class="material-symbols-outlined" data-icon="arrow_back">arrow_back</span>
+</button>
+<div class="flex items-center gap-sm">
+<div class="relative">
+<img alt="Nova AI" class="w-10 h-10 rounded-full object-cover border-2 border-primary-container" data-alt="A sophisticated futuristic portrait of a humanoid AI with glowing blue fiber-optic details integrated into its sleek, translucent white skin. The background is a clean, minimalist high-tech lab with soft clinical lighting. The overall mood is intelligent, calm, and advanced, perfectly reflecting a high-end digital communication platform." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDwx27oYV4LxQQW5yKUBno6Cgj9kfUzjI6M8E4hDFlz8QUTAlloMqVAWPL7XNEsAktXK3wE8vsNaGhM8cUrYS1_Dpemk-cYTEv5D29CHaSALOTo2Drn7h4ifC2UtdDcTo_c-UMnRwlBgULo7xqWgIidu6RE9pF11C4ikyqZzyONZs0nnF3uDP3MFuyryaQ0g6m2u_fHFrYJn33teV72Q94dE9ZaS64GF7NCD9SfaYtaAbZJvVyAJSUy3dN_mZp9qPXdLm3Prnnbvpe7"/>
+<span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
+</div>
+<div>
+<h1 class="font-headline-sm text-headline-sm text-on-surface leading-tight">Nova AI</h1>
+<p class="font-label-md text-label-md text-on-surface-variant">Active now</p>
+</div>
+</div>
+</div>
+<div class="flex items-center gap-sm">
+<button class="transition-colors duration-200 active:scale-95 text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full">
+<span class="material-symbols-outlined" data-icon="call">call</span>
+</button>
+<button class="transition-colors duration-200 active:scale-95 text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full">
+<span class="material-symbols-outlined" data-icon="videocam">videocam</span>
+</button>
+<button class="transition-colors duration-200 active:scale-95 text-on-surface-variant hover:bg-surface-container-low p-2 rounded-full">
+<span class="material-symbols-outlined" data-icon="more_vert">more_vert</span>
+</button>
+</div>
+</header>
+<!-- Chat Canvas -->
+<main class="flex-grow pt-20 pb-24 px-margin-mobile chat-container overflow-y-auto max-w-4xl mx-auto w-full">
+<div class="flex flex-col gap-lg">
+<!-- Date Separator -->
+<div class="flex justify-center my-md">
+<span class="bg-surface-container text-on-surface-variant font-label-md text-label-md px-4 py-1 rounded-full">Today</span>
+</div>
+<!-- AI Message (Left) -->
+<div class="flex items-end gap-sm message-entrance">
+<img alt="Nova AI" class="w-8 h-8 rounded-full object-cover" data-alt="Close up portrait of a helpful artificial intelligence character with soft, glowing digital features and a friendly expression. The background is a blurred, high-tech interface with soft blue and white light. The image style is polished, corporate modern, and highly approachable, suitable for a professional messaging app." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAHZ_06auOn4pV1aaNZDG4jBL1Cx1--te8mefcI2iUYCqjvXSvsK0dzUoXsFQLUT475xFzwO73k08ql4k7yLKIi6ZJgDsRyJgqSbiSrIoQgj9giAfEcA0hi6LKfwlWEzmj5E9ebEW5fr24nyYz0rI-ZhfxVO9nVj16tmsD_BxCvzsjF0H3ijc5hHFh4B-4mqve6AFDyvlBeNDBcLdqIx_csF6_z8HN3BKZVpgKTR4tmytWDFKF-RP1Hxv_01PvP_MEWIRG2toeKQGJs"/>
+<div class="max-w-[80%] flex flex-col gap-xs">
+<div class="bg-surface-container-lowest text-on-surface p-md rounded-2xl rounded-bl-none shadow-[0px_4px_12px_rgba(0,0,0,0.03)] border border-surface-variant font-chat-bubble text-chat-bubble">
+                        Hello Alex! I've analyzed your recent project files. Would you like a summary of the key action items for the upcoming sprint?
+                    </div>
+<span class="font-label-md text-label-md text-on-surface-variant ml-2">10:42 AM</span>
+</div>
+</div>
+<!-- User Message (Right) -->
+<div class="flex items-end justify-end gap-sm message-entrance">
+<div class="max-w-[80%] flex flex-col gap-xs items-end">
+<div class="bg-primary text-on-primary p-md rounded-2xl rounded-br-none shadow-md font-chat-bubble text-chat-bubble">
+                        Yes, please! Focus specifically on the design constraints we discussed yesterday.
+                    </div>
+<div class="flex items-center gap-xs mr-2">
+<span class="font-label-md text-label-md text-on-surface-variant">10:43 AM</span>
+<span class="material-symbols-outlined text-[14px] text-primary" data-icon="done_all">done_all</span>
+</div>
+</div>
+<img alt="User Profile Picture" class="w-8 h-8 rounded-full object-cover" data-alt="A professional young man in a modern office setting with warm natural sunlight. He has a calm, focused expression. The visual style is crisp, high-resolution lifestyle photography with a shallow depth of field, emphasizing a friendly and collaborative business environment." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAV60EEETBCfT8fY9FU5kkjOmsgZpCA34_iMuh9RwgxKrQfoyzB9Oy0eymnlew9a5j3GSy-JN37zDHdtv45eRilpKFeTpg3bqXBVt0qpV2ECjZ1gZyvHRqYcXJyrbk3Vo3gNXY8HryC3RCyFbyLBd6TOqod2WGFmQXgehzZjL4HfPiZ7eJnxzMESSWLf0nfmKByfREum59QiyOH96ntNHtcQejUevGrkFZe-93ag-Y3hjozEDW_MJVFrHu7LRxAn6JeeGUPFxXsJflo"/>
+</div>
+<!-- AI Message with Quick Replies -->
+<div class="flex items-end gap-sm message-entrance">
+<img alt="Nova AI" class="w-8 h-8 rounded-full object-cover" data-alt="Detailed digital art of a friendly AI assistant profile icon. The character has translucent, ethereal features with subtle circuitry patterns glowing beneath the surface. Soft white and primary blue lighting create a professional and dependable atmosphere. Minimalist background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAD58yN4ZdvES-20TO7lNgJs7V6jpZx2QhYxkQpXHUZyEm8JMI2fyIGSOOHx-AAf30Z9MgKB0reP4AvrGS7WayxZEkGcTcCVfjxUX27BpLc1_mZh1DcTH-ZxKxgSJl02EFOMHl9QRGiYtpRdp1n8I7qriuaQLIbvvbI73o-KolTynWHjw6rzRyQhvOLalBfLYi-7627mQ4Z-yhl5JKqtF8gZx1Ktz_cwEMumWHlqZSDh0okt7tiNXmxytmaEymGPggK_6kbJZbhmT4J"/>
+<div class="max-w-[80%] flex flex-col gap-md">
+<div class="bg-surface-container-lowest text-on-surface p-md rounded-2xl rounded-bl-none shadow-[0px_4px_12px_rgba(0,0,0,0.03)] border border-surface-variant font-chat-bubble text-chat-bubble">
+                        Understood. I've highlighted three main constraints:
+                        <ul class="list-disc ml-4 mt-2 space-y-1">
+<li>Mobile viewport support (min 320px)</li>
+<li>AA Accessibility compliance</li>
+<li>Strict adherence to the 4px base grid</li>
+</ul>
+</div>
+<!-- Quick Reply Chips -->
+<div class="flex flex-wrap gap-sm">
+<button class="bg-primary-fixed text-on-primary-fixed-variant px-md py-1.5 rounded-full font-label-md text-label-md transition-all duration-200 hover:bg-primary-container hover:text-white active:scale-95">Looks good</button>
+<button class="bg-primary-fixed text-on-primary-fixed-variant px-md py-1.5 rounded-full font-label-md text-label-md transition-all duration-200 hover:bg-primary-container hover:text-white active:scale-95">Tell me more</button>
+<button class="bg-primary-fixed text-on-primary-fixed-variant px-md py-1.5 rounded-full font-label-md text-label-md transition-all duration-200 hover:bg-primary-container hover:text-white active:scale-95">Send to Team</button>
+</div>
+<span class="font-label-md text-label-md text-on-surface-variant ml-2">10:45 AM</span>
+</div>
+</div>
+<!-- User Typing Indicator (Optional Mock) -->
+<div class="flex items-center gap-xs ml-10 opacity-0 transition-opacity duration-300" id="typing-indicator">
+<div class="w-1.5 h-1.5 bg-on-surface-variant rounded-full animate-bounce"></div>
+<div class="w-1.5 h-1.5 bg-on-surface-variant rounded-full animate-bounce [animation-delay:0.2s]"></div>
+<div class="w-1.5 h-1.5 bg-on-surface-variant rounded-full animate-bounce [animation-delay:0.4s]"></div>
+</div>
+</div>
+</main>
+<!-- Message Bar -->
+<footer class="fixed bottom-0 left-0 w-full bg-surface-container-lowest p-margin-mobile pb-safe z-50">
+<div class="max-w-4xl mx-auto flex items-end gap-sm">
+<button class="mb-1 text-on-surface-variant hover:bg-surface-container-high p-2 rounded-full transition-colors active:scale-90">
+<span class="material-symbols-outlined" data-icon="add_circle">add_circle</span>
+</button>
+<div class="flex-grow bg-surface-container-low rounded-2xl px-md py-2 flex items-end gap-sm border border-transparent focus-within:border-primary transition-all">
+<textarea class="flex-grow bg-transparent border-none focus:ring-0 text-on-surface placeholder:text-outline py-1.5 resize-none font-body-md text-body-md max-h-32 overflow-y-auto" oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'; document.getElementById('typing-indicator').style.opacity = this.value ? '1' : '0';" placeholder="Type a message..." rows="1"></textarea>
+<button class="mb-0.5 text-on-surface-variant hover:text-primary transition-colors">
+<span class="material-symbols-outlined" data-icon="mood">mood</span>
+</button>
+</div>
+<button class="bg-primary text-on-primary w-12 h-12 flex items-center justify-center rounded-2xl shadow-md transition-all duration-300 active:scale-90 hover:brightness-110">
+<span class="material-symbols-outlined" data-icon="send" style="font-variation-settings: 'FILL' 1;">send</span>
+</button>
+</div>
+</footer>
+<script>
+        // Micro-interaction: Scroll to bottom on load
+        window.addEventListener('load', () => {
+            const container = document.querySelector('.chat-container');
+            container.scrollTop = container.scrollHeight;
+        });
+
+        // Simple send simulation
+        const sendBtn = document.querySelector('button .material-symbols-outlined[data-icon="send"]').parentElement;
+        const textarea = document.querySelector('textarea');
+        
+        sendBtn.addEventListener('click', () => {
+            if(textarea.value.trim() !== "") {
+                const message = textarea.value;
+                textarea.value = "";
+                textarea.style.height = "auto";
+                document.getElementById('typing-indicator').style.opacity = '0';
+                
+                // Here we would typically append the message to the DOM
+                console.log("Message sent:", message);
+            }
+        });
+    </script>
+</body></html>
