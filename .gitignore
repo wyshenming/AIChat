@@ -1,0 +1,10 @@
+.gradle/
+build/
+app/build/
+local.properties
+*.iml
+.idea/
+
+# Local QA screenshots and temporary Stitch downloads
+qa-*.png
+stitch_exports/
