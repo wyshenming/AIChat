@@ -4,6 +4,7 @@ build/
 app/build/
 local.properties
 *.apk
+!release/aichat_flutter-release.apk
 *.aab
 *.iml
 .idea/

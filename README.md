@@ -25,3 +25,15 @@
 ```text
 release/app-debug.apk
 ```
+
+Flutter 版安装包位于：
+
+```text
+release/aichat_flutter-release.apk
+```
+
+Flutter 版源码位于：
+
+```text
+aichat_flutter/
+```
