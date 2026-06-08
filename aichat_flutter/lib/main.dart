@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -29,6 +30,21 @@ class AiCharacter {
   final String role;
   final String description;
   final String firstMessage;
+
+  AiCharacter copyWith({
+    String? id,
+    String? name,
+    String? role,
+    String? description,
+    String? firstMessage,
+  }) =>
+      AiCharacter(
+        id: id ?? this.id,
+        name: name ?? this.name,
+        role: role ?? this.role,
+        description: description ?? this.description,
+        firstMessage: firstMessage ?? this.firstMessage,
+      );
 
   Map<String, dynamic> toJson() => {
         'id': id,
@@ -134,6 +150,13 @@ class _HomeScreenState extends State<HomeScreen> {
   bool checking = false;
   bool loadingModels = false;
   String connectionStatus = '尚未验证连接';
+  String profileName = '旅行者';
+  String profileTitle = 'AI 聊天玩家';
+  String profileAvatarBase64 = '';
+  List<Map<String, String>> profileFields = [
+    {'key': '地区', 'value': '未设置'},
+    {'key': '偏好', 'value': '角色扮演'},
+  ];
   List<String> models = [];
   final messageController = TextEditingController();
   final searchController = TextEditingController();
@@ -216,6 +239,19 @@ class _HomeScreenState extends State<HomeScreen> {
         api.baseUrl = savedApi.baseUrl;
         api.apiKey = savedApi.apiKey;
         api.model = savedApi.model;
+        final profile = json['profile'] is Map<String, dynamic> ? json['profile'] as Map<String, dynamic> : <String, dynamic>{};
+        profileName = profile['name'] as String? ?? profileName;
+        profileTitle = profile['title'] as String? ?? profileTitle;
+        profileAvatarBase64 = profile['avatar'] as String? ?? profileAvatarBase64;
+        profileFields = (profile['fields'] as List?)
+                ?.whereType<Map>()
+                .map((item) => {
+                      'key': item['key']?.toString() ?? '',
+                      'value': item['value']?.toString() ?? '',
+                    })
+                .where((item) => item['key']!.trim().isNotEmpty || item['value']!.trim().isNotEmpty)
+                .toList() ??
+            profileFields;
         selectedCharacterId = characters.first.id;
         baseUrlController.text = api.baseUrl;
         keyController.text = api.apiKey;
@@ -232,6 +268,12 @@ class _HomeScreenState extends State<HomeScreen> {
         'characters': characters.map((item) => item.toJson()).toList(),
         'messages': messages.map((item) => item.toJson()).toList(),
         'api': api.toJson(),
+        'profile': {
+          'name': profileName,
+          'title': profileTitle,
+          'avatar': profileAvatarBase64,
+          'fields': profileFields,
+        },
       }),
     );
   }
@@ -390,6 +432,21 @@ class _HomeScreenState extends State<HomeScreen> {
     persist();
   }
 
+  void ensureGreeting(AiCharacter character) {
+    final firstMessage = character.firstMessage.trim();
+    if (firstMessage.isEmpty) return;
+    final hasMessages = messages.any((message) => message.characterId == character.id);
+    if (hasMessages) return;
+    messages.add(ChatMessage(
+      id: DateTime.now().microsecondsSinceEpoch.toString(),
+      characterId: character.id,
+      content: firstMessage,
+      isUser: false,
+      time: '刚刚',
+    ));
+    persist();
+  }
+
   void createCharacter() {
     setState(() {
       characters.insert(
@@ -406,17 +463,224 @@ class _HomeScreenState extends State<HomeScreen> {
     persist();
   }
 
+  Future<void> editCharacter(AiCharacter character) async {
+    final nameController = TextEditingController(text: character.name);
+    final roleController = TextEditingController(text: character.role);
+    final descriptionController = TextEditingController(text: character.description);
+    final firstMessageController = TextEditingController(text: character.firstMessage);
+    final updated = await showDialog<AiCharacter>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('编辑角色'),
+        content: SingleChildScrollView(
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            TextField(controller: nameController, decoration: inputDecoration('角色名称')),
+            const SizedBox(height: 12),
+            TextField(controller: roleController, decoration: inputDecoration('角色定位')),
+            const SizedBox(height: 12),
+            TextField(controller: descriptionController, minLines: 3, maxLines: 7, decoration: inputDecoration('角色描述')),
+            const SizedBox(height: 12),
+            TextField(controller: firstMessageController, minLines: 2, maxLines: 5, decoration: inputDecoration('开场白')),
+          ]),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('取消')),
+          FilledButton(
+            onPressed: () {
+              final name = nameController.text.trim();
+              if (name.isEmpty) return;
+              Navigator.pop(
+                context,
+                character.copyWith(
+                  name: name,
+                  role: roleController.text.trim().isEmpty ? '自定义角色' : roleController.text.trim(),
+                  description: descriptionController.text.trim(),
+                  firstMessage: firstMessageController.text.trim().isEmpty ? '你好，我在。' : firstMessageController.text.trim(),
+                ),
+              );
+            },
+            child: const Text('保存'),
+          ),
+        ],
+      ),
+    );
+    if (updated == null) return;
+    setState(() {
+      final index = characters.indexWhere((item) => item.id == character.id);
+      if (index >= 0) characters[index] = updated;
+    });
+    await persist();
+  }
+
+  Future<void> importCharacter() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['json', 'png'],
+        withData: true,
+      );
+      final file = result?.files.single;
+      final bytes = file?.bytes;
+      if (file == null || bytes == null) return;
+      final character = file.extension?.toLowerCase() == 'png'
+          ? parsePngCharacter(bytes)
+          : characterFromJson(jsonDecode(utf8.decode(bytes)) as Map<String, dynamic>);
+      setState(() {
+        characters.insert(0, character);
+        selectedCharacterId = character.id;
+        ensureGreeting(character);
+      });
+      await persist();
+      showSnack('已导入 ${character.name}');
+    } catch (error) {
+      showSnack('导入失败：${friendlyError(error)}');
+    }
+  }
+
+  AiCharacter parsePngCharacter(List<int> bytes) {
+    if (bytes.length < 12 || bytes[0] != 0x89 || bytes[1] != 0x50 || bytes[2] != 0x4E || bytes[3] != 0x47) {
+      throw Exception('不是有效的 PNG 角色卡');
+    }
+    var offset = 8;
+    while (offset + 12 <= bytes.length) {
+      final length = readUint32(bytes, offset);
+      final type = ascii.decode(bytes.sublist(offset + 4, offset + 8));
+      final dataStart = offset + 8;
+      final dataEnd = dataStart + length;
+      if (dataEnd > bytes.length) break;
+      if (type == 'tEXt') {
+        final chunk = bytes.sublist(dataStart, dataEnd);
+        final separator = chunk.indexOf(0);
+        if (separator > 0) {
+          final key = latin1.decode(chunk.sublist(0, separator));
+          final value = latin1.decode(chunk.sublist(separator + 1));
+          if (key == 'chara') {
+            final decoded = utf8.decode(base64.decode(value));
+            return characterFromJson(jsonDecode(decoded) as Map<String, dynamic>);
+          }
+        }
+      }
+      offset = dataEnd + 4;
+    }
+    throw Exception('没有找到 SillyTavern 角色数据');
+  }
+
+  int readUint32(List<int> bytes, int offset) =>
+      (bytes[offset] << 24) | (bytes[offset + 1] << 16) | (bytes[offset + 2] << 8) | bytes[offset + 3];
+
+  AiCharacter characterFromJson(Map<String, dynamic> raw) {
+    final data = raw['data'] is Map<String, dynamic> ? raw['data'] as Map<String, dynamic> : raw;
+    final name = pickText(data, ['name', 'char_name'], fallback: pickText(raw, ['name', 'char_name'], fallback: '导入角色'));
+    final personality = pickText(data, ['personality']);
+    final scenario = pickText(data, ['scenario']);
+    final creatorNotes = pickText(data, ['creator_notes', 'creatorNotes']);
+    final description = [
+      pickText(data, ['description', 'desc']),
+      if (personality.isNotEmpty) '性格：$personality',
+      if (scenario.isNotEmpty) '场景：$scenario',
+      if (creatorNotes.isNotEmpty) '备注：$creatorNotes',
+    ].where((item) => item.trim().isNotEmpty).join('\n\n');
+    return AiCharacter(
+      id: DateTime.now().microsecondsSinceEpoch.toString(),
+      name: name,
+      role: pickText(data, ['role', 'tags'], fallback: personality.isEmpty ? '导入角色' : personality).split('\n').first,
+      description: description.isEmpty ? '从角色卡导入。' : description,
+      firstMessage: pickText(data, ['first_mes', 'firstMessage', 'first_message', 'mes_example'], fallback: '你好，我在。'),
+    );
+  }
+
+  String pickText(Map<String, dynamic> json, List<String> keys, {String fallback = ''}) {
+    for (final key in keys) {
+      final value = json[key];
+      if (value is String && value.trim().isNotEmpty) return value.trim();
+      if (value is List && value.isNotEmpty) return value.map((item) => item.toString()).join(', ');
+    }
+    return fallback;
+  }
+
+  void showSnack(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> changeProfileAvatar() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['png', 'jpg', 'jpeg', 'webp'],
+        withData: true,
+      );
+      final bytes = result?.files.single.bytes;
+      if (bytes == null) return;
+      setState(() => profileAvatarBase64 = base64Encode(bytes));
+      await persist();
+      showSnack('头像已更新');
+    } catch (error) {
+      showSnack('头像更新失败：${friendlyError(error)}');
+    }
+  }
+
+  Future<void> editProfile() async {
+    final nameController = TextEditingController(text: profileName);
+    final titleController = TextEditingController(text: profileTitle);
+    final updated = await showDialog<List<String>>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('我的资料'),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          TextField(controller: nameController, decoration: inputDecoration('昵称')),
+          const SizedBox(height: 12),
+          TextField(controller: titleController, minLines: 2, maxLines: 4, decoration: inputDecoration('身份 / 签名')),
+        ]),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('取消')),
+          FilledButton(
+            onPressed: () {
+              final name = nameController.text.trim();
+              if (name.isEmpty) return;
+              Navigator.pop(context, [name, titleController.text.trim().isEmpty ? 'AI 聊天玩家' : titleController.text.trim()]);
+            },
+            child: const Text('保存'),
+          ),
+        ],
+      ),
+    );
+    if (updated == null) return;
+    setState(() {
+      profileName = updated[0];
+      profileTitle = updated[1];
+    });
+    await persist();
+    showSnack('资料已保存');
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (screen == 'chat') return chatScreen();
-    if (screen == 'api') return apiScreen();
-    return Scaffold(
+    final isMainScreen = screen == 'main';
+    return PopScope(
+      canPop: isMainScreen,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop && !isMainScreen) {
+          setState(() => screen = 'main');
+        }
+      },
+      child: screen == 'chat'
+          ? chatScreen()
+          : screen == 'api'
+              ? apiScreen()
+              : screen == 'profile'
+                  ? profileScreen()
+                  : mainScreen(),
+    );
+  }
+
+  Widget mainScreen() => Scaffold(
       appBar: AppBar(
         title: Text(tab == 0 ? '聊天' : tab == 1 ? '角色' : '酒馆 AI'),
         backgroundColor: bg.withValues(alpha: 0.94),
         actions: [
+          if (tab == 1) IconButton(onPressed: importCharacter, icon: const Icon(Icons.upload_file_outlined)),
           if (tab == 1) IconButton(onPressed: createCharacter, icon: const Icon(Icons.add_circle_outline)),
-          if (tab != 1) const Padding(padding: EdgeInsets.only(right: 12), child: Icon(Icons.settings_outlined)),
         ],
       ),
       body: IndexedStack(index: tab, children: [chatsPage(), charactersPage(), mePage()]),
@@ -431,7 +695,6 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
     );
-  }
 
   Widget pagePadding(Widget child) => SafeArea(
         top: false,
@@ -447,10 +710,13 @@ class _HomeScreenState extends State<HomeScreen> {
           ...characters.map((character) {
             final last = messages.where((message) => message.characterId == character.id).lastOrNull;
             return listCard(
-              onTap: () => setState(() {
-                selectedCharacterId = character.id;
-                screen = 'chat';
-              }),
+              onTap: () {
+                ensureGreeting(character);
+                setState(() {
+                  selectedCharacterId = character.id;
+                  screen = 'chat';
+                });
+              },
               child: Row(children: [
                 avatar(character.name),
                 const SizedBox(width: 14),
@@ -490,6 +756,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   avatar(character.name),
                   const SizedBox(width: 14),
                   Expanded(child: Text(character.name, style: titleStyle())),
+                  IconButton(
+                    tooltip: '编辑角色',
+                    onPressed: () => editCharacter(character),
+                    icon: const Icon(Icons.edit_outlined, color: blue),
+                  ),
                   TextButton(
                     onPressed: () => setState(() {
                       characters.removeWhere((item) => item.id == character.id);
@@ -504,10 +775,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 8),
                 Text(character.description, style: mutedStyle()),
               ]),
-              onTap: () => setState(() {
-                selectedCharacterId = character.id;
-                screen = 'chat';
-              }),
+              onTap: () {
+                ensureGreeting(character);
+                setState(() {
+                  selectedCharacterId = character.id;
+                  screen = 'chat';
+                });
+              },
             )),
         OutlinedButton.icon(
           onPressed: createCharacter,
@@ -515,22 +789,189 @@ class _HomeScreenState extends State<HomeScreen> {
           label: const Text('创建角色'),
           style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(60), shape: rounded(18)),
         ),
+        const SizedBox(height: 12),
+        FilledButton.icon(
+          onPressed: importCharacter,
+          icon: const Icon(Icons.upload_file),
+          label: const Text('导入 JSON / 酒馆角色卡'),
+          style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(60), shape: rounded(18)),
+        ),
       ],
     );
   }
 
   Widget mePage() => pagePadding(Column(children: [
         const SizedBox(height: 12),
-        avatar('旅行者', size: 116),
+        Stack(
+          children: [
+            avatar(profileName, size: 116, imageBase64: profileAvatarBase64, onTap: changeProfileAvatar),
+            Positioned(
+              right: 2,
+              bottom: 2,
+              child: Material(
+                color: blue,
+                shape: const CircleBorder(),
+                child: InkWell(
+                  customBorder: const CircleBorder(),
+                  onTap: changeProfileAvatar,
+                  child: const Padding(
+                    padding: EdgeInsets.all(9),
+                    child: Icon(Icons.photo_camera_outlined, color: Colors.white, size: 20),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
         const SizedBox(height: 14),
-        Text('旅行者', style: titleStyle(size: 24)),
+        Text(profileName, style: titleStyle(size: 24)),
         const SizedBox(height: 4),
-        const Text('AI 聊天玩家', style: TextStyle(color: textMuted)),
+        Text(profileTitle, textAlign: TextAlign.center, style: const TextStyle(color: textMuted)),
         const SizedBox(height: 28),
         menuCard(Icons.wifi, 'API 管理', '验证连接、获取模型列表、保存默认模型', () => setState(() => screen = 'api')),
-        menuCard(Icons.person_outline, '我的资料', '昵称、身份和偏好设置', () {}),
-        tipCard('本地优先', '当前 Flutter 版会把 API 配置和聊天保存在本机。正式发布前建议改成加密存储。'),
+        menuCard(Icons.person_outline, '我的资料', '昵称、身份和偏好设置', () => setState(() => screen = 'profile')),
+        tipCard('本地优先', '当前 Flutter 版会把 API 配置、资料和聊天保存到本机。正式发布前建议改成加密存储。'),
       ]));
+
+  Widget profileScreen() => Scaffold(
+        appBar: AppBar(
+          leading: IconButton(onPressed: () => setState(() => screen = 'main'), icon: const Icon(Icons.arrow_back)),
+          title: const Text('编辑资料'),
+          backgroundColor: Colors.white,
+        ),
+        body: ListView(
+          padding: const EdgeInsets.fromLTRB(18, 22, 18, 110),
+          children: [
+            Center(
+              child: Column(children: [
+                Stack(children: [
+                  avatar(profileName, size: 128, imageBase64: profileAvatarBase64, onTap: changeProfileAvatar),
+                  Positioned(
+                    right: 2,
+                    bottom: 2,
+                    child: Material(
+                      color: blue,
+                      shape: const CircleBorder(),
+                      child: InkWell(
+                        customBorder: const CircleBorder(),
+                        onTap: changeProfileAvatar,
+                        child: const Padding(
+                          padding: EdgeInsets.all(10),
+                          child: Icon(Icons.edit_outlined, color: Colors.white, size: 20),
+                        ),
+                      ),
+                    ),
+                  ),
+                ]),
+                const SizedBox(height: 14),
+                Text(profileName, style: titleStyle(size: 22)),
+                const SizedBox(height: 4),
+                Text(profileTitle, style: const TextStyle(color: textMuted, fontSize: 13, fontWeight: FontWeight.w700)),
+              ]),
+            ),
+            const SizedBox(height: 28),
+            profileInput(
+              label: '昵称',
+              value: profileName,
+              hint: '别人看到你的名字',
+              onChanged: (value) => profileName = value.trim().isEmpty ? '旅行者' : value.trim(),
+            ),
+            const SizedBox(height: 16),
+            profileInput(
+              label: '身份 / 签名',
+              value: profileTitle,
+              hint: '一句话描述你的身份、偏好或当前状态',
+              maxLines: 2,
+              onChanged: (value) => profileTitle = value.trim().isEmpty ? 'AI 聊天玩家' : value.trim(),
+            ),
+            const SizedBox(height: 26),
+            Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+              Text('自定义字段', style: titleStyle(size: 18)),
+              TextButton.icon(
+                onPressed: () => setState(() => profileFields.add({'key': '新字段', 'value': ''})),
+                icon: const Icon(Icons.add),
+                label: const Text('新增字段'),
+              ),
+            ]),
+            const SizedBox(height: 10),
+            ...profileFields.asMap().entries.map((entry) => customProfileField(entry.key, entry.value)),
+          ],
+        ),
+        bottomNavigationBar: SafeArea(
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(18, 12, 18, 18),
+            color: Colors.white.withValues(alpha: 0.94),
+            child: FilledButton.icon(
+              onPressed: () async {
+                setState(() {
+                  profileFields = profileFields
+                      .where((item) => item['key']!.trim().isNotEmpty || item['value']!.trim().isNotEmpty)
+                      .toList();
+                });
+                await persist();
+                showSnack('资料已保存');
+              },
+              icon: const Icon(Icons.check),
+              label: const Text('保存资料'),
+              style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(56), shape: rounded(16)),
+            ),
+          ),
+        ),
+      );
+
+  Widget profileInput({
+    required String label,
+    required String value,
+    required String hint,
+    required ValueChanged<String> onChanged,
+    int maxLines = 1,
+  }) =>
+      Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 7),
+          child: Text(label, style: const TextStyle(color: textMuted, fontWeight: FontWeight.w800, fontSize: 13)),
+        ),
+        TextFormField(
+          initialValue: value,
+          maxLines: maxLines,
+          onChanged: onChanged,
+          decoration: inputDecoration(hint),
+        ),
+      ]);
+
+  Widget customProfileField(int index, Map<String, String> field) => Card(
+        color: Colors.white,
+        elevation: 0,
+        margin: const EdgeInsets.only(bottom: 12),
+        shape: rounded(16),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(children: [
+            Expanded(
+              child: Column(children: [
+                TextFormField(
+                  key: ValueKey('profile-key-$index-${field['key']}'),
+                  initialValue: field['key'],
+                  onChanged: (value) => profileFields[index]['key'] = value,
+                  decoration: inputDecoration('字段名', helper: '比如地区、职业、偏好、世界观标签。'),
+                ),
+                const SizedBox(height: 10),
+                TextFormField(
+                  key: ValueKey('profile-value-$index-${field['value']}'),
+                  initialValue: field['value'],
+                  onChanged: (value) => profileFields[index]['value'] = value,
+                  decoration: inputDecoration('字段内容', helper: '这个字段对应的具体内容。'),
+                ),
+              ]),
+            ),
+            IconButton(
+              tooltip: '删除字段',
+              onPressed: () => setState(() => profileFields.removeAt(index)),
+              icon: const Icon(Icons.delete_outline, color: danger),
+            ),
+          ]),
+        ),
+      );
 
   Widget chatScreen() => Scaffold(
         appBar: AppBar(
@@ -754,11 +1195,23 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       );
 
-  Widget avatar(String name, {double size = 54}) => CircleAvatar(
-        radius: size / 2,
-        backgroundColor: lightBlue,
-        child: Text(name.characters.take(2).toString(), style: TextStyle(color: blue, fontWeight: FontWeight.w800, fontSize: size > 80 ? 28 : 16)),
-      );
+  Widget avatar(String name, {double size = 54, String? imageBase64, VoidCallback? onTap}) {
+    ImageProvider? image;
+    if (imageBase64 != null && imageBase64.isNotEmpty) {
+      try {
+        image = MemoryImage(base64Decode(imageBase64));
+      } catch (_) {}
+    }
+    final initials = name.trim().isEmpty ? '?' : name.trim().substring(0, name.trim().length < 2 ? 1 : 2);
+    final circle = CircleAvatar(
+      radius: size / 2,
+      backgroundColor: lightBlue,
+      backgroundImage: image,
+      child: image == null ? Text(initials, style: TextStyle(color: blue, fontWeight: FontWeight.w800, fontSize: size > 80 ? 28 : 16)) : null,
+    );
+    if (onTap == null) return circle;
+    return InkWell(borderRadius: BorderRadius.circular(size / 2), onTap: onTap, child: circle);
+  }
 
   Widget sectionTitle(String value) => Text(value, style: const TextStyle(color: Color(0xFF858B99), fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 1.4));
 
@@ -768,8 +1221,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
   RoundedRectangleBorder rounded(double radius) => RoundedRectangleBorder(borderRadius: BorderRadius.circular(radius), side: const BorderSide(color: Color(0x55C2C6D6)));
 
-  InputDecoration inputDecoration(String hint, {IconData? icon}) => InputDecoration(
+  String? inputHelper(String hint) {
+    if (hint.contains('名称') || hint.contains('鍚嶇О')) return '显示在列表、聊天标题和头像上的名字。';
+    if (hint.contains('定位') || hint.contains('瀹氫綅')) return '一句话概括身份，会作为模型提示词的一部分。';
+    if (hint.contains('描述') || hint.contains('鎻忚堪')) return '写性格、背景、说话方式和互动边界。';
+    if (hint.contains('开场') || hint.contains('寮€鍦')) return '新聊天里角色主动发出的第一句话。';
+    return null;
+  }
+
+  InputDecoration inputDecoration(String hint, {IconData? icon, String? helper}) => InputDecoration(
         hintText: hint,
+        helperText: helper ?? inputHelper(hint),
+        helperMaxLines: 2,
         prefixIcon: icon == null ? null : Icon(icon),
         filled: true,
         fillColor: Colors.white,
