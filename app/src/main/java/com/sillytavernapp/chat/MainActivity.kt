@@ -86,6 +86,10 @@ private val CardWhite = Color.White
 private val TextMain = Color(0xFF121C2A)
 private val TextMuted = Color(0xFF424754)
 private val Danger = Color(0xFFBA1A1A)
+private val Ink = Color(0xFF211A2F)
+private val SoftRose = Color(0xFFFFEEF3)
+private val WarmGold = Color(0xFFFFF2C8)
+private val MistGreen = Color(0xFFE7F7EF)
 
 data class AiCharacter(
     val id: String = UUID.randomUUID().toString(),
@@ -94,7 +98,10 @@ data class AiCharacter(
     val description: String = "",
     val personality: String = "",
     val scenario: String = "",
-    val firstMessage: String = "你好，我在。想聊点什么？"
+    val firstMessage: String = "你好，我在。想聊点什么？",
+    val tags: List<String> = emptyList(),
+    val avatarSeed: String = name.take(2),
+    val lastInteractedAt: String = "未开始"
 )
 
 data class ChatMessage(
@@ -111,6 +118,27 @@ data class ApiConfig(
     val model: String = "gpt-4o-mini"
 )
 
+data class CharacterMemory(
+    val id: String = UUID.randomUUID().toString(),
+    val characterId: String,
+    val content: String,
+    val updatedAt: String = "刚刚"
+)
+
+data class AffectionState(
+    val characterId: String,
+    val level: Int = 1,
+    val label: String = "初识"
+)
+
+data class WorldBookEntry(
+    val id: String = UUID.randomUUID().toString(),
+    val characterId: String,
+    val keyword: String,
+    val content: String,
+    val enabled: Boolean = true
+)
+
 data class UserProfile(
     val name: String = "旅行者",
     val age: String = "28",
@@ -120,23 +148,27 @@ data class UserProfile(
 )
 
 enum class MainTab(val label: String) {
-    Chats("聊天"),
-    Characters("角色"),
-    Me("我的")
+    Square("广场"),
+    History("历史"),
+    Settings("设置")
 }
 
 sealed class Screen {
     data object Main : Screen()
+    data class CharacterDetail(val characterId: String) : Screen()
     data class ChatRoom(val characterId: String) : Screen()
     data object ProfileEditor : Screen()
     data object ApiManagement : Screen()
 }
 
 data class UiState(
-    val tab: MainTab = MainTab.Chats,
+    val tab: MainTab = MainTab.Square,
     val screen: Screen = Screen.Main,
     val characters: List<AiCharacter> = sampleCharacters(),
     val messages: List<ChatMessage> = sampleMessages(),
+    val memories: List<CharacterMemory> = emptyList(),
+    val affections: List<AffectionState> = sampleAffections(),
+    val worldBooks: List<WorldBookEntry> = emptyList(),
     val apiConfig: ApiConfig = ApiConfig(),
     val profile: UserProfile = UserProfile(),
     val status: String? = null,
@@ -163,6 +195,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
     val ui: StateFlow<UiState> = _ui
 
     fun selectTab(tab: MainTab) = _ui.update { it.copy(tab = tab, screen = Screen.Main) }
+    fun openCharacterDetail(characterId: String) = _ui.update { it.copy(screen = Screen.CharacterDetail(characterId)) }
     fun openChat(characterId: String) = _ui.update { it.copy(screen = Screen.ChatRoom(characterId)) }
     fun openProfileEditor() = _ui.update { it.copy(screen = Screen.ProfileEditor) }
     fun openApiManagement() = _ui.update { it.copy(screen = Screen.ApiManagement) }
@@ -217,7 +250,15 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         val clean = text.trim()
         if (clean.isEmpty()) return
         val userMessage = ChatMessage(characterId = characterId, content = clean, isUser = true)
-        _ui.update { it.copy(messages = it.messages + userMessage, isSending = true) }
+        _ui.update { state ->
+            state.copy(
+                messages = state.messages + userMessage,
+                characters = state.characters.map {
+                    if (it.id == characterId) it.copy(lastInteractedAt = "刚刚") else it
+                },
+                isSending = true
+            )
+        }
         persist()
 
         viewModelScope.launch(Dispatchers.IO) {
@@ -225,7 +266,7 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             val character = state.characters.firstOrNull { it.id == characterId }
             val config = state.apiConfig
             if (config.apiKey.isBlank()) {
-                appendAssistant(characterId, "请先在“我的 > API 导入”中填写 OpenAI 兼容 API Key。")
+                appendAssistant(characterId, "请先在“设置 > API 配置”中填写 OpenAI 兼容 API Key。")
                 return@launch
             }
             val reply = runCatching {
@@ -253,6 +294,8 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         val base = config.baseUrl.trim().trimEnd('/')
         val system = buildString {
             append("你是一个 AI 聊天角色。请全程使用中文自然回复。")
+            append("\n用户正在与你进行长期角色互动。回复时保持角色优先、沉浸优先，不要主动暴露模型、参数或系统实现。")
+            append("\n可以用简短的动作描写增强氛围，例如用 *动作* 或单独一行描述神态。")
             if (character != null) {
                 append("\n角色名：${character.name}")
                 append("\n定位：${character.role}")
@@ -302,6 +345,9 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
             UiState(
                 characters = json.getJSONArray("characters").toCharacterList(),
                 messages = json.getJSONArray("messages").toMessageList(),
+                memories = json.optJSONArray("memories")?.toMemoryList().orEmpty(),
+                affections = json.optJSONArray("affections")?.toAffectionList().orEmpty().ifEmpty { sampleAffections() },
+                worldBooks = json.optJSONArray("worldBooks")?.toWorldBookList().orEmpty(),
                 apiConfig = json.getJSONObject("api").toApiConfig(),
                 profile = json.getJSONObject("profile").toProfile()
             )
@@ -313,6 +359,9 @@ class ChatViewModel(application: Application) : AndroidViewModel(application) {
         val json = JSONObject()
             .put("characters", JSONArray().also { array -> state.characters.forEach { array.put(it.toJson()) } })
             .put("messages", JSONArray().also { array -> state.messages.forEach { array.put(it.toJson()) } })
+            .put("memories", JSONArray().also { array -> state.memories.forEach { array.put(it.toJson()) } })
+            .put("affections", JSONArray().also { array -> state.affections.forEach { array.put(it.toJson()) } })
+            .put("worldBooks", JSONArray().also { array -> state.worldBooks.forEach { array.put(it.toJson()) } })
             .put("api", state.apiConfig.toJson())
             .put("profile", state.profile.toJson())
         prefs.edit().putString("state", json.toString()).apply()
@@ -343,6 +392,7 @@ fun AppRoot(viewModel: ChatViewModel) {
     Surface(Modifier.fillMaxSize(), color = Surface) {
         when (val screen = state.screen) {
             Screen.Main -> MainScaffold(state, viewModel)
+            is Screen.CharacterDetail -> CharacterDetailScreen(state, screen.characterId, viewModel)
             is Screen.ChatRoom -> ChatRoomScreen(state, screen.characterId, viewModel)
             Screen.ProfileEditor -> ProfileEditorScreen(state.profile, viewModel)
             Screen.ApiManagement -> ApiManagementScreen(state.apiConfig, viewModel)
@@ -372,12 +422,12 @@ fun MainScaffold(state: UiState, viewModel: ChatViewModel) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (state.tab == MainTab.Me) "酒馆 AI" else state.tab.label, fontWeight = FontWeight.Bold) },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Surface, titleContentColor = Blue),
+                title = { Text(if (state.tab == MainTab.Square) "角色广场" else state.tab.label, fontWeight = FontWeight.Bold) },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Surface, titleContentColor = Ink),
                 actions = {
-                    if (state.tab == MainTab.Characters) {
+                    if (state.tab == MainTab.Square) {
                         TextButton(onClick = { picker.launch(arrayOf("application/json", "image/png", "*/*")) }) {
-                            Text("导入")
+                            Text("导入角色")
                         }
                     }
                 }
@@ -396,7 +446,7 @@ fun MainScaffold(state: UiState, viewModel: ChatViewModel) {
             }
         },
         floatingActionButton = {
-            if (state.tab == MainTab.Characters) {
+            if (state.tab == MainTab.Square) {
                 FloatingActionButton(containerColor = Blue, contentColor = Color.White, onClick = viewModel::createBlankCharacter) {
                     Text("新建")
                 }
@@ -404,57 +454,203 @@ fun MainScaffold(state: UiState, viewModel: ChatViewModel) {
         }
     ) { padding ->
         when (state.tab) {
-            MainTab.Chats -> ChatsScreen(state, viewModel, padding)
-            MainTab.Characters -> CharactersScreen(state, viewModel, padding)
-            MainTab.Me -> MeScreen(state, viewModel, padding)
+            MainTab.Square -> CharacterSquareScreen(state, viewModel, padding)
+            MainTab.History -> InteractionHistoryScreen(state, viewModel, padding)
+            MainTab.Settings -> SettingsScreen(state, viewModel, padding)
         }
     }
 }
 
 @Composable
-fun ChatsScreen(state: UiState, viewModel: ChatViewModel, padding: PaddingValues) {
+fun CharacterSquareScreen(state: UiState, viewModel: ChatViewModel, padding: PaddingValues) {
+    var keyword by remember { mutableStateOf("") }
+    val characters = state.characters.filter {
+        it.name.contains(keyword, true) ||
+            it.description.contains(keyword, true) ||
+            it.role.contains(keyword, true) ||
+            it.tags.any { tag -> tag.contains(keyword, true) }
+    }
     LazyColumn(
         modifier = Modifier.padding(padding).fillMaxSize(),
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         item {
-            Text("最近消息", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-            Spacer(Modifier.height(8.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                state.characters.take(4).forEach { AvatarChip(it.name.take(2)) }
-            }
+            SquareHero()
+            Spacer(Modifier.height(14.dp))
+            OutlinedTextField(
+                value = keyword,
+                onValueChange = { keyword = it },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                placeholder = { Text("搜索角色、标签或简介...") },
+                singleLine = true
+            )
         }
-        items(state.characters) { character ->
-            val last = state.messages.lastOrNull { it.characterId == character.id }
-            ChatListCard(character, last, onClick = { viewModel.openChat(character.id) })
+        items(characters) { character ->
+            CharacterSquareCard(
+                character = character,
+                onClick = { viewModel.openCharacterDetail(character.id) }
+            )
         }
     }
 }
 
 @Composable
-fun ChatListCard(character: AiCharacter, last: ChatMessage?, onClick: () -> Unit) {
+fun SquareHero() {
+    Card(
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = Ink)
+    ) {
+        Row(Modifier.fillMaxWidth().padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("SillyTavern Lite", color = Color.White, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                Text("选择一个想见的人，继续你们之间的故事。", color = Color.White.copy(alpha = 0.86f))
+            }
+            Avatar("ST", 58, WarmGold)
+        }
+    }
+}
+
+@Composable
+fun CharacterSquareCard(character: AiCharacter, onClick: () -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(8.dp),
         colors = CardDefaults.cardColors(containerColor = CardWhite),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+            Avatar(character.avatarSeed.ifBlank { character.name.take(2) }, 64, avatarColor(character.id))
+            Spacer(Modifier.width(14.dp))
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+                Text(character.name, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(
+                    character.description.ifBlank { character.firstMessage },
+                    color = TextMuted,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                TagRow(character.tags.ifEmpty { listOf(character.role) })
+            }
+        }
+    }
+}
+
+@Composable
+fun InteractionHistoryScreen(state: UiState, viewModel: ChatViewModel, padding: PaddingValues) {
+    val activeCharacters = state.characters.filter { character ->
+        state.messages.any { it.characterId == character.id }
+    }
+    LazyColumn(
+        modifier = Modifier.padding(padding).fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        item {
+            Text("每个角色都有独立聊天记录，默认仅保存在本机。", color = TextMuted)
+        }
+        items(activeCharacters) { character ->
+            val last = state.messages.lastOrNull { it.characterId == character.id }
+            HistoryCard(character, last, onClick = { viewModel.openChat(character.id) })
+        }
+    }
+}
+
+@Composable
+fun HistoryCard(character: AiCharacter, last: ChatMessage?, onClick: () -> Unit) {
+    Card(
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(containerColor = CardWhite)
     ) {
         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Avatar(character.name.take(2), 56)
-            Spacer(Modifier.width(14.dp))
+            Avatar(character.avatarSeed.ifBlank { character.name.take(2) }, 54, avatarColor(character.id))
+            Spacer(Modifier.width(12.dp))
             Column(Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(character.name, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(last?.time ?: "未开始", color = TextMuted, style = MaterialTheme.typography.labelSmall)
+                    Text(last?.time ?: character.lastInteractedAt, color = TextMuted, style = MaterialTheme.typography.labelSmall)
                 }
-                Text(
-                    last?.content ?: character.firstMessage,
-                    color = TextMuted,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                Text(last?.content ?: character.firstMessage, color = TextMuted, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
+        }
+    }
+}
+
+@Composable
+fun SettingsScreen(state: UiState, viewModel: ChatViewModel, padding: PaddingValues) {
+    LazyColumn(
+        modifier = Modifier.padding(padding).fillMaxSize(),
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        item {
+            Card(shape = RoundedCornerShape(8.dp), colors = CardDefaults.cardColors(containerColor = MistGreen)) {
+                Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("本地优先", fontWeight = FontWeight.Bold)
+                    Text("角色卡、聊天记录、长期记忆、世界书和 API Key 默认保存在本地设备，不提供云同步。", color = TextMuted)
+                }
+            }
+        }
+        item { MenuCard("API 配置", "OpenAI 兼容地址、API Key、模型名称", onClick = viewModel::openApiManagement) }
+        item { MenuCard("推理参数", "温度、上下文长度、调试开关预留", onClick = {}) }
+        item { MenuCard("数据管理", "本地备份、恢复、ZIP 数据包导入导出预留", onClick = {}) }
+        item { MenuCard("我的资料", "昵称、身份和偏好字段", onClick = viewModel::openProfileEditor) }
+        item {
+            Card(shape = RoundedCornerShape(8.dp), colors = CardDefaults.cardColors(containerColor = WarmGold)) {
+                Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("数据包结构", fontWeight = FontWeight.Bold)
+                    Text("characters/、chats/、memories/、worldbooks/、settings.json", color = TextMuted)
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CharacterDetailScreen(state: UiState, characterId: String, viewModel: ChatViewModel) {
+    val character = state.characters.firstOrNull { it.id == characterId } ?: return
+    val affection = state.affections.firstOrNull { it.characterId == characterId } ?: AffectionState(characterId)
+    val last = state.messages.lastOrNull { it.characterId == characterId }
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("角色详情", fontWeight = FontWeight.Bold) },
+                navigationIcon = { TextButton(onClick = viewModel::back) { Text("返回") } },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Surface, titleContentColor = Ink),
+                actions = { TextButton(onClick = { viewModel.deleteCharacter(characterId) }) { Text("删除", color = Danger) } }
+            )
+        },
+        bottomBar = {
+            Button(
+                onClick = { viewModel.openChat(characterId) },
+                modifier = Modifier.fillMaxWidth().padding(16.dp).height(54.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Ink)
+            ) {
+                Text(if (last == null) "开始聊天" else "继续聊天")
+            }
+        }
+    ) { padding ->
+        LazyColumn(
+            modifier = Modifier.padding(padding).fillMaxSize(),
+            contentPadding = PaddingValues(18.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            item {
+                Avatar(character.avatarSeed.ifBlank { character.name.take(2) }, 128, avatarColor(character.id))
+                Spacer(Modifier.height(12.dp))
+                Text(character.name, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = Ink)
+                Text(character.role, color = TextMuted)
+                Spacer(Modifier.height(8.dp))
+                TagRow(character.tags.ifEmpty { listOf(character.role) })
+            }
+            item { DetailBlock("简介", character.description.ifBlank { "暂无简介。" }) }
+            item { DetailBlock("开场白", character.firstMessage) }
+            item { DetailBlock("当前关系", "${affection.label} · Lv.${affection.level}") }
+            item { DetailBlock("最近互动", last?.time ?: character.lastInteractedAt) }
         }
     }
 }
@@ -575,18 +771,24 @@ fun SettingsPanel() {
 @Composable
 fun ChatRoomScreen(state: UiState, characterId: String, viewModel: ChatViewModel) {
     val character = state.characters.firstOrNull { it.id == characterId } ?: return
+    val affection = state.affections.firstOrNull { it.characterId == characterId } ?: AffectionState(characterId)
     var input by remember { mutableStateOf("") }
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
-                    Column {
-                        Text(character.name, fontWeight = FontWeight.Bold)
-                        Text("在线", style = MaterialTheme.typography.labelSmall, color = TextMuted)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Avatar(character.avatarSeed.ifBlank { character.name.take(2) }, 38, avatarColor(character.id))
+                        Spacer(Modifier.width(10.dp))
+                        Column {
+                            Text(character.name, fontWeight = FontWeight.Bold)
+                            Text(affection.label, style = MaterialTheme.typography.labelSmall, color = TextMuted)
+                        }
                     }
                 },
                 navigationIcon = { TextButton(onClick = viewModel::back) { Text("返回") } },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Surface)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Surface),
+                actions = { TextButton(onClick = { viewModel.openCharacterDetail(characterId) }) { Text("更多") } }
             )
         },
         bottomBar = {
@@ -614,21 +816,30 @@ fun ChatRoomScreen(state: UiState, characterId: String, viewModel: ChatViewModel
             }
         }
     ) { padding ->
-        LazyColumn(
-            modifier = Modifier.padding(padding).fillMaxSize(),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            item {
-                Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    AssistChip(onClick = {}, label = { Text("今天") })
+        Box(Modifier.padding(padding).fillMaxSize()) {
+            Text(
+                character.avatarSeed.ifBlank { character.name.take(1) },
+                modifier = Modifier.align(Alignment.Center),
+                color = avatarColor(character.id).copy(alpha = 0.18f),
+                style = MaterialTheme.typography.displayLarge,
+                fontWeight = FontWeight.Black
+            )
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                item {
+                    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        AssistChip(onClick = {}, label = { Text("今天") })
+                    }
                 }
-            }
-            items(state.messages.filter { it.characterId == characterId }) { message ->
-                MessageBubble(message)
-            }
-            if (state.isSending) {
-                item { Text("${character.name} 正在思考...", color = TextMuted) }
+                items(state.messages.filter { it.characterId == characterId }) { message ->
+                    MessageBubble(message)
+                }
+                if (state.isSending) {
+                    item { ActionLine("${character.name} 正在思考...") }
+                }
             }
         }
     }
@@ -655,10 +866,31 @@ fun MessageBubble(message: ChatMessage) {
                     )
                     .padding(14.dp)
             ) {
-                Text(message.content, color = if (message.isUser) Color.White else TextMain)
+                MessageContent(message.content, if (message.isUser) Color.White else TextMain)
             }
             Text(message.time, color = TextMuted, style = MaterialTheme.typography.labelSmall, modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp))
         }
+    }
+}
+
+@Composable
+fun MessageContent(content: String, color: Color) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        content.lines().filter { it.isNotBlank() }.forEach { line ->
+            val trimmed = line.trim()
+            if ((trimmed.startsWith("*") && trimmed.endsWith("*")) || trimmed.startsWith("（")) {
+                Text(trimmed.trim('*'), color = color.copy(alpha = 0.72f), style = MaterialTheme.typography.bodyMedium)
+            } else {
+                Text(trimmed, color = color)
+            }
+        }
+    }
+}
+
+@Composable
+fun ActionLine(text: String) {
+    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterStart) {
+        Text(text, color = TextMuted, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(horizontal = 8.dp))
     }
 }
 
@@ -775,14 +1007,14 @@ fun LabeledField(label: String, value: String, onChange: (String) -> Unit) {
 }
 
 @Composable
-fun Avatar(text: String, size: Int) {
+fun Avatar(text: String, size: Int, background: Color = LightBlue) {
     Box(
         modifier = Modifier
             .size(size.dp)
-            .background(LightBlue, CircleShape),
+            .background(background, CircleShape),
         contentAlignment = Alignment.Center
     ) {
-        Text(text.ifBlank { "AI" }, color = Blue, fontWeight = FontWeight.Bold)
+        Text(text.ifBlank { "AI" }, color = Ink, fontWeight = FontWeight.Bold)
     }
 }
 
@@ -795,9 +1027,39 @@ fun AvatarChip(text: String) {
 }
 
 private fun tabSymbol(tab: MainTab): String = when (tab) {
-    MainTab.Chats -> "聊"
-    MainTab.Characters -> "角"
-    MainTab.Me -> "我"
+    MainTab.Square -> "角"
+    MainTab.History -> "历"
+    MainTab.Settings -> "设"
+}
+
+@Composable
+fun TagRow(tags: List<String>) {
+    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        tags.take(3).forEach { tag ->
+            AssistChip(onClick = {}, label = { Text(tag.take(12)) })
+        }
+    }
+}
+
+@Composable
+fun DetailBlock(title: String, body: String) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(containerColor = CardWhite)
+    ) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(title, color = TextMuted, style = MaterialTheme.typography.labelMedium)
+            Text(body, color = TextMain)
+        }
+    }
+}
+
+private fun avatarColor(id: String): Color = when (kotlin.math.abs(id.hashCode()) % 4) {
+    0 -> LightBlue
+    1 -> SoftRose
+    2 -> WarmGold
+    else -> MistGreen
 }
 
 private fun parseCharacter(bytes: ByteArray, nameHint: String): AiCharacter {
@@ -818,13 +1080,21 @@ private fun jsonToCharacter(root: JSONObject, nameHint: String): AiCharacter {
     val scenario = data.optString("scenario", root.optString("scenario", ""))
     val first = data.optString("first_mes", root.optString("first_mes", root.optString("firstMessage", "你好，我在。")))
     val role = data.optString("role", data.optString("creator_notes", "AI 角色")).lineSequence().firstOrNull()?.take(18) ?: "AI 角色"
+    val tags = data.optJSONArray("tags")?.toStringList()
+        ?: data.optString("tags", "")
+            .split(',', '，', '#')
+            .map { it.trim() }
+            .filter { it.isNotBlank() }
     return AiCharacter(
         name = name,
         role = role.ifBlank { "AI 角色" },
         description = description,
         personality = personality,
         scenario = scenario,
-        firstMessage = first.ifBlank { "你好，我在。" }
+        firstMessage = first.ifBlank { "你好，我在。" },
+        tags = tags.ifEmpty { listOf(role.ifBlank { "AI 角色" }) },
+        avatarSeed = name.take(2),
+        lastInteractedAt = "未开始"
     )
 }
 
@@ -900,10 +1170,15 @@ private fun JSONArray.toCharacterList(): List<AiCharacter> = List(length()) { in
             description = it.optString("description"),
             personality = it.optString("personality"),
             scenario = it.optString("scenario"),
-            firstMessage = it.optString("firstMessage", "你好，我在。")
+            firstMessage = it.optString("firstMessage", "你好，我在。"),
+            tags = it.optJSONArray("tags")?.toStringList().orEmpty(),
+            avatarSeed = it.optString("avatarSeed", it.optString("name", "AI").take(2)),
+            lastInteractedAt = it.optString("lastInteractedAt", "未开始")
         )
     }
 }
+
+private fun JSONArray.toStringList(): List<String> = List(length()) { index -> optString(index) }.filter { it.isNotBlank() }
 
 private fun JSONArray.toMessageList(): List<ChatMessage> = List(length()) { index ->
     getJSONObject(index).let {
@@ -931,6 +1206,39 @@ private fun JSONObject.toProfile() = UserProfile(
     role = optString("role", "AI 聊天玩家")
 )
 
+private fun JSONArray.toMemoryList(): List<CharacterMemory> = List(length()) { index ->
+    getJSONObject(index).let {
+        CharacterMemory(
+            id = it.optString("id", UUID.randomUUID().toString()),
+            characterId = it.getString("characterId"),
+            content = it.optString("content"),
+            updatedAt = it.optString("updatedAt", "刚刚")
+        )
+    }
+}
+
+private fun JSONArray.toAffectionList(): List<AffectionState> = List(length()) { index ->
+    getJSONObject(index).let {
+        AffectionState(
+            characterId = it.getString("characterId"),
+            level = it.optInt("level", 1),
+            label = it.optString("label", "初识")
+        )
+    }
+}
+
+private fun JSONArray.toWorldBookList(): List<WorldBookEntry> = List(length()) { index ->
+    getJSONObject(index).let {
+        WorldBookEntry(
+            id = it.optString("id", UUID.randomUUID().toString()),
+            characterId = it.getString("characterId"),
+            keyword = it.optString("keyword"),
+            content = it.optString("content"),
+            enabled = it.optBoolean("enabled", true)
+        )
+    }
+}
+
 private fun AiCharacter.toJson() = JSONObject()
     .put("id", id)
     .put("name", name)
@@ -939,6 +1247,9 @@ private fun AiCharacter.toJson() = JSONObject()
     .put("personality", personality)
     .put("scenario", scenario)
     .put("firstMessage", firstMessage)
+    .put("tags", JSONArray().also { array -> tags.forEach { array.put(it) } })
+    .put("avatarSeed", avatarSeed)
+    .put("lastInteractedAt", lastInteractedAt)
 
 private fun ChatMessage.toJson() = JSONObject()
     .put("id", id)
@@ -959,6 +1270,24 @@ private fun UserProfile.toJson() = JSONObject()
     .put("location", location)
     .put("role", role)
 
+private fun CharacterMemory.toJson() = JSONObject()
+    .put("id", id)
+    .put("characterId", characterId)
+    .put("content", content)
+    .put("updatedAt", updatedAt)
+
+private fun AffectionState.toJson() = JSONObject()
+    .put("characterId", characterId)
+    .put("level", level)
+    .put("label", label)
+
+private fun WorldBookEntry.toJson() = JSONObject()
+    .put("id", id)
+    .put("characterId", characterId)
+    .put("keyword", keyword)
+    .put("content", content)
+    .put("enabled", enabled)
+
 private fun sampleCharacters(): List<AiCharacter> = listOf(
     AiCharacter(
         id = "sample-star",
@@ -967,7 +1296,10 @@ private fun sampleCharacters(): List<AiCharacter> = listOf(
         description = "擅长陪伴、整理思绪和进行轻剧情对话的 AI 角色。",
         personality = "温柔、耐心、会主动追问细节。",
         scenario = "用户进入一个安静的星舰休息舱，与星河开始对话。",
-        firstMessage = "欢迎回来。今天想让我陪你聊天，还是一起整理一个故事？"
+        firstMessage = "欢迎回来。今天想让我陪你聊天，还是一起整理一个故事？",
+        tags = listOf("陪伴", "温柔", "日常"),
+        avatarSeed = "星河",
+        lastInteractedAt = "10:42"
     ),
     AiCharacter(
         id = "sample-lin",
@@ -976,7 +1308,9 @@ private fun sampleCharacters(): List<AiCharacter> = listOf(
         description = "适合长篇角色扮演，会维护世界观和人物关系。",
         personality = "克制、聪明、带一点幽默。",
         scenario = "雨夜的旧书店里，林澈正等你推门而入。",
-        firstMessage = "你终于来了。我刚找到一页很奇怪的手稿。"
+        firstMessage = "你终于来了。我刚找到一页很奇怪的手稿。",
+        tags = listOf("剧情", "悬疑", "长期互动"),
+        avatarSeed = "林澈"
     ),
     AiCharacter(
         id = "sample-ink",
@@ -985,9 +1319,23 @@ private fun sampleCharacters(): List<AiCharacter> = listOf(
         description = "帮助你创建角色卡、润色开场白、补全世界设定。",
         personality = "直接、专业、重视结构。",
         scenario = "创作工作台已打开，所有设定都可以重新编排。",
-        firstMessage = "把你的角色草稿给我，我会先帮你抓住核心冲突。"
+        firstMessage = "把你的角色草稿给我，我会先帮你抓住核心冲突。",
+        tags = listOf("创作", "角色卡", "世界书"),
+        avatarSeed = "墨蓝"
     )
 )
+
+private fun sampleAffections(): List<AffectionState> = sampleCharacters().mapIndexed { index, character ->
+    AffectionState(
+        characterId = character.id,
+        level = index + 1,
+        label = when (index) {
+            0 -> "熟悉"
+            1 -> "初识"
+            else -> "协作"
+        }
+    )
+}
 
 private fun sampleMessages(): List<ChatMessage> {
     val first = sampleCharacters().first()
